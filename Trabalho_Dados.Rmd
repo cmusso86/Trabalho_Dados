@@ -35,14 +35,14 @@ amostra <- slice_sample(dados, n=100)
 
 ## Tratamento ----
 
-names(amostra) <- c("ID", "Idade", "Status Socioeconômico", "Casa Própria", "Setor", "Poupança" )
+names(amostra) <- c("ID", "idade", "status", "casa", "setor", "save" )
 
 amostra_trat <- amostra %>% 
-  mutate(`Status Socioeconômico`=factor(`Status Socioeconômico`, 
+  mutate(status=factor(status, 
                        labels=c("Superior", "Médio", "Inferior")), 
-         `Casa Própria`=factor(`Casa Própria`, labels=c("Não", "Sim")), 
-         Setor=factor(Setor, labels=c("B", "A")),
-        `Poupança`=factor(`Poupança`, labels=c("Não", "Sim"))) %>% 
+         casa=factor(casa, labels=c("Não", "Sim")), 
+         setor=factor(setor, levels=c(1,0), labels=c("B", "A")),
+        save=factor(save, labels=c("Não", "Sim"))) %>% 
   as.data.frame()
 ```
 
@@ -77,18 +77,58 @@ sort(amostra$ID)
 
 ## Análise
 
-Descrever um pouco o que é regressão logística
+A regressão logística é um modelo estatístico utilizado inicialmente para prever a probabilidade de ocorrência de um evento binário, como é o caso da variável resposta deste trabalho. Para tal, os conceitos da regressão linear são expandidos para comportar uma variável entre [0,1] (a probabilidade), utilizando a função logito.
+
+Assim,  modela-se a média da variável resposta por 
+
+$\pi = \frac{exp{(\beta_0 + |beta_1 X_i)}}{1-(\beta_0 + |beta_1 X_i)}$
 
 # Resultados
 
 
 ## Análise descritiva
 
+
+### Idade
 ```{r}
+idade_by <- amostra_trat %>% 
+  ggplot(aes(x=save, y=idade, fill=save))+
+   geom_boxplot()+
+   scale_fill_manual(values=c("#00822E", "#0068B4"))+
+   #geom_jitter(color="black", size=0.4, alpha=0.9) +
+   theme_classic(base_size = 14)+
+   theme(legend.position = "none")+
+   labs(x= "Tem Poupança", y= "Idade (Anos)")
+   
+
+
+idade <- amostra_trat %>% 
+   ggplot(aes(y=idade))+
+   geom_boxplot()+
+  #geom_jitter( color="black", size=0.4, alpha=0.9) +
+  theme_classic(base_size = 10)+
+   theme(legend.position = "none", 
+         axis.text.x = element_blank(), 
+         axis.ticks = element_blank(),
+         axis.line.x = element_blank(),
+          axis.line.y = element_blank())+
+   labs(x= "", y= "")+
+  ggtitle("Geral")
+```
+
+```{r, out.width="90%"}
+ idade_by +  inset_element(idade, left = 0.01, bottom = 0.45, right = 0.25, top = 1)
+```
+
+### 
+
+```{r}
+names(amostra_trat) <- c("ID", "Idade", "Status Socioeconômico", "Casa Própria", "Setor", "Poupança" )
 
 ```
 
 ```{r}
+
 Tab1 <- papeR::summarize(amostra_trat[,-1],
                  type = "factor", group = "Poupança")
 ```
@@ -113,6 +153,7 @@ Modelo e residuos
 
 # Conclusão
 
+\newpage
 # Apêndice
 
 ```{r ref.label=knitr::all_labels(), echo=TRUE, eval=FALSE}
