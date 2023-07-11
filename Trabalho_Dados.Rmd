@@ -1,0 +1,120 @@
+---
+titulo: "Análise de Dados Categorizados"
+subtitulo: "Trabalho Final"
+aluno1:  "Carolina Musso 18/0047850"
+aluno2: "Juliana Rosa"
+orientador: "Maria Tereza Leão"
+ano: "1/2023"
+referencias: aux/referencias.bib
+output: 
+  bookdown::pdf_document2:
+    template: aux/template.tex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, 
+                      warning = FALSE, 
+                      message = FALSE)
+```
+
+```{r bibliotecas}
+
+rm(list = ls()) #will clear all objects includes hidden objects.
+options(rstudio.help.showDataPreview = FALSE)
+# Carregando bibliotecas ---------
+pacman::p_load(tidyverse, rio, papeR, patchwork, kableExtra)
+
+
+# Bases -----
+
+dados <- import ("data/dados_trabalho.xlsx")
+
+# amostra
+set.seed(42)
+amostra <- slice_sample(dados, n=100)
+
+## Tratamento ----
+
+names(amostra) <- c("ID", "Idade", "Status Socioeconômico", "Casa Própria", "Setor", "Poupança" )
+
+amostra_trat <- amostra %>% 
+  mutate(`Status Socioeconômico`=factor(`Status Socioeconômico`, 
+                       labels=c("Superior", "Médio", "Inferior")), 
+         `Casa Própria`=factor(`Casa Própria`, labels=c("Não", "Sim")), 
+         Setor=factor(Setor, labels=c("B", "A")),
+        `Poupança`=factor(`Poupança`, labels=c("Não", "Sim"))) %>% 
+  as.data.frame()
+```
+
+\newpage
+
+# Introdução e Objetivos
+
+A habilidade e a possibilidade de poupar dinheiro pode estar relacionada a diversos fatores. \citeonline{economics} cita a idade, poder aquisitivo, desenvolvimento econômico e inflação como possíveis questões associadas. 
+
+Este trabalho visa avaliar fatores associados a um chefe de ter familia ter ou não poupança por meio da seleção de um modelo de regressão logística. 
+
+# Metodologia
+
+
+## Variáveis 
+A variável resposta analisada nesse estudo que tentará ser modelada é a variável qualitativa nominal binária "Porrui conta popuança". 
+
+As variáveis explicativas (ou os fatores possíveismente associados) são:
+- Idade, variável quantitativa medida em anos. 
+- Status socioeconômico, variável qualitativa ordinal medida em: 1 - superior, 2 - médio , 3 - inferior.
+- Possuir casa própria: variável qualitativa nominal (binária, onde "sim" corresponde a casa própria quitada.)
+- Setor da cidade em que habita: Variável qualitativa nominal (Setor A ou B)
+
+
+## Amostra
+
+Para este trabalho, uma sub-amostra aleatória simples sem reposição foi selecionada a partir de uma amostra de 196 chefes de família. Os IDS selecionados nesse trabalho foram:
+
+```{r}
+sort(amostra$ID)
+```
+
+## Análise
+
+Descrever um pouco o que é regressão logística
+
+# Resultados
+
+
+## Análise descritiva
+
+```{r}
+
+```
+
+```{r}
+Tab1 <- papeR::summarize(amostra_trat[,-1],
+                 type = "factor", group = "Poupança")
+```
+
+```{r, echo = FALSE, cache=F, results = 'asis'}
+
+xtable(Tab1)
+```
+
+```{r}
+Tab2 <- papeR::summarize(amostra_trat[,-1],
+                 type = "numeric", group = "Poupança")
+```
+
+```{r, echo = FALSE, cache=F, results = 'asis'}
+
+xtable(Tab2, width = rep("0.5in", 11))
+```
+
+Parametros e interpretacao
+Modelo e residuos
+
+# Conclusão
+
+# Apêndice
+
+```{r ref.label=knitr::all_labels(), echo=TRUE, eval=FALSE}
+```
+
