@@ -244,30 +244,33 @@ Modelo e residuos
 
 ## Modelagem 
 
-```{r}
+```{r fig.height=5, fig.width=5.2}
 mod1 <- glm(data=amostra, save ~ idade+status+casa+setor, binomial(link = "logit"))
 
-r <- roc( amostra$save,as.vector(fitted.values(mod1)) , percent=F,   boot.n=1000, ci.alpha=0.9, stratified=FALSE, plot=TRUE, grid=TRUE, 
-          show.thres=TRUE, legacy.axes = TRUE, reuse.auc = TRUE)
+r <- roc( amostra$save,as.vector(fitted.values(mod1)) , 
+          grid=TRUE, print.auc = TRUE, percent=T)
 
 
-p <- ggroc(r)
-p <- p + ggtitle("Receiver Operating Characteristic Curve")
-p <- p + ylab("Sensitivity")
-p <- p + xlab("Specificity")
-p <- p + geom_segment(
-    aes(x = 1, xend = 0, y = 0, yend = 1), color = "grey", linetype = "dashed"
-)
-p <- p + scale_y_continuous(expand = c(0, 0))
-p <- p + scale_x_reverse(expand = c(0, 0))
-print(p)
+plot(r ,xlim=c(100,0),ylim=c(0,100), asp = NA, legacy.axes = F, xlab="Especificidade (%)", ylab="Sensibilidade (%)",percent=T,print.auc = TRUE, main="idade+status+casa+setor" )
+
 ```
 
-fit <- glm(outcome ~ gender + age + wfns + s100b , data = aSAH, family = binomial)
 
- roc(aSAH$outcome, as.vector(fitted.values(fit)), percent=F,   boot.n=1000, ci.alpha=0.9, stratified=FALSE, plot=TRUE, grid=TRUE, show.thres=TRUE, legacy.axes = TRUE, reuse.auc = TRUE,
-# print.thres = c(0.30,0.35, 0.40, 0.45,0.48, 0.50,0.55, 0.60),#
-print.auc = TRUE, print.thres.col = "blue", ci=TRUE, ci.type="bars", print.thres.cex = 0.7, main = paste("ROC curve using","(N = ",nrow(aSAH),")") )
+
+```{r, out.width="80%"}
+ggroc(r)+ 
+  ggtitle("Receiver Operating Characteristic Curve")+ 
+  ylab("Sensitivity")+ 
+  xlab("Specificity")+
+  geom_segment(
+    aes(x = 1, xend = 0, y = 0, yend = 1), 
+    color = "grey", linetype = "dashed"
+)+
+  scale_y_continuous(expand = c(0, 0))+ 
+  scale_x_reverse(expand = c(0, 0))+
+  theme_classic(base_size=14)
+
+```
 
 
 
