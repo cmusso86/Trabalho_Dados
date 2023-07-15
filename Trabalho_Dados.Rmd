@@ -22,7 +22,7 @@ knitr::opts_chunk$set(echo = FALSE,
 rm(list = ls()) #will clear all objects includes hidden objects.
 options(rstudio.help.showDataPreview = FALSE)
 # Carregando bibliotecas ---------
-pacman::p_load(tidyverse, rio, papeR, patchwork, kableExtra)
+pacman::p_load(tidyverse, rio, papeR, patchwork, kableExtra, pROC)
 
 
 # Bases -----
@@ -58,6 +58,7 @@ Este trabalho visa avaliar fatores associados a um chefe de ter familia ter ou n
 
 
 ## Variáveis 
+
 A variável resposta analisada nesse estudo que tentará ser modelada é a variável qualitativa nominal binária "Porrui conta popuança". 
 
 As variáveis explicativas (ou os fatores possíveismente associados) são:
@@ -86,7 +87,7 @@ $\pi = \frac{exp{(\beta_0 + |beta_1 X_i)}}{1-(\beta_0 + |beta_1 X_i)}$
 # Resultados
 
 
-## Análise descritiva
+## Análise descritiva gráficos
 
 
 ### Idade
@@ -111,7 +112,8 @@ idade <- amostra_trat %>%
          axis.text.x = element_blank(), 
          axis.ticks = element_blank(),
          axis.line.x = element_blank(),
-          axis.line.y = element_blank())+
+          axis.line.y = element_blank(),
+         panel.border = element_rect(colour = "black", fill=NA))+
    labs(x= "", y= "")+
   ggtitle("Geral")
 ```
@@ -120,7 +122,96 @@ idade <- amostra_trat %>%
  idade_by +  inset_element(idade, left = 0.01, bottom = 0.45, right = 0.25, top = 1)
 ```
 
-### 
+### Status Socio econômico
+
+```{r}
+status_by <- amostra_trat %>% 
+  ggplot(aes(x=save,fill=factor(status)))+
+   geom_bar(position="fill", color="black")+
+   scale_fill_manual(values=c("#00822E", "#7E7E65", "#0068B4"))+
+   #geom_jitter(color="black", size=0.4, alpha=0.9) +
+   theme_classic(base_size = 14)+
+   theme(legend.position = "none")+
+   labs(x= "Tem Poupança", y= "Proporção")
+   
+
+
+status <-   amostra_trat %>% 
+  ggplot(aes(x=1,fill=factor(status)))+
+  geom_bar(position="fill", color="black")+
+  scale_fill_manual("",values=c("#00822E", "#7E7E65", "#0068B4"))+
+  theme_classic(base_size = 14)+
+  theme( axis.text.x = element_blank(),
+        axis.ticks = element_blank())+
+  labs(x= "", y= "")+
+  ggtitle("Geral")
+```
+
+```{r, out.width="90%"}
+ status_by +  status+  plot_layout(widths = c(2, 1))
+```
+
+
+
+### Possui casa própria quitada
+
+```{r}
+casa_by <- amostra_trat %>% 
+  ggplot(aes(x=save,fill=factor(casa)))+
+   geom_bar(position="fill", color="black")+
+   scale_fill_manual("", values=c("#00822E", "#0068B4"))+
+   #geom_jitter(color="black", size=0.4, alpha=0.9) +
+   theme_classic(base_size = 14)+
+   theme(legend.position = "none")+
+   labs(x= "Tem Poupança", y= "Proporção")
+   
+
+
+casa<-   amostra_trat %>% 
+  ggplot(aes(x=1,fill=factor(casa)))+
+  geom_bar(position="fill", color="black")+
+  scale_fill_manual("", values=c("#00822E", "#0068B4"))+
+  theme_classic(base_size = 14)+
+  theme(axis.text.x = element_blank(),
+        axis.ticks = element_blank())+
+  labs(x= "", y= "")+
+  ggtitle("Geral")
+```
+
+```{r, out.width="90%"}
+ casa_by +  casa +   plot_layout(widths = c(2, 1))
+```
+
+### Setor da cidade
+
+```{r}
+setor_by <- amostra_trat %>% 
+  ggplot(aes(x=save,fill=factor(setor)))+
+   geom_bar(position="fill", color="black")+
+   scale_fill_manual("", values=c("#00822E", "#0068B4"))+
+   #geom_jitter(color="black", size=0.4, alpha=0.9) +
+   theme_classic(base_size = 14)+
+   theme(legend.position = "none")+
+   labs(x= "Tem Poupança", y= "Proporção")
+   
+
+
+setor <-   amostra_trat %>% 
+  ggplot(aes(x=1,fill=factor(setor)))+
+  geom_bar(position="fill", color="black")+
+  scale_fill_manual("", values=c("#00822E", "#0068B4"))+
+  theme_classic(base_size = 14)+
+  theme(axis.text.x = element_blank(),
+        axis.ticks = element_blank())+
+  labs(x= "", y= "")+
+  ggtitle("Geral")
+```
+
+```{r, out.width="90%"}
+ setor_by +  setor + plot_layout(widths = c(2, 1))
+```
+
+## Análise descritiva Tabelas
 
 ```{r}
 names(amostra_trat) <- c("ID", "Idade", "Status Socioeconômico", "Casa Própria", "Setor", "Poupança" )
@@ -150,6 +241,35 @@ xtable(Tab2, width = rep("0.5in", 11))
 
 Parametros e interpretacao
 Modelo e residuos
+
+## Modelagem 
+
+```{r}
+mod1 <- glm(data=amostra, save ~ idade+status+casa+setor, binomial(link = "logit"))
+
+r <- roc( amostra$save,as.vector(fitted.values(mod1)) , percent=F,   boot.n=1000, ci.alpha=0.9, stratified=FALSE, plot=TRUE, grid=TRUE, 
+          show.thres=TRUE, legacy.axes = TRUE, reuse.auc = TRUE)
+
+
+p <- ggroc(r)
+p <- p + ggtitle("Receiver Operating Characteristic Curve")
+p <- p + ylab("Sensitivity")
+p <- p + xlab("Specificity")
+p <- p + geom_segment(
+    aes(x = 1, xend = 0, y = 0, yend = 1), color = "grey", linetype = "dashed"
+)
+p <- p + scale_y_continuous(expand = c(0, 0))
+p <- p + scale_x_reverse(expand = c(0, 0))
+print(p)
+```
+
+fit <- glm(outcome ~ gender + age + wfns + s100b , data = aSAH, family = binomial)
+
+ roc(aSAH$outcome, as.vector(fitted.values(fit)), percent=F,   boot.n=1000, ci.alpha=0.9, stratified=FALSE, plot=TRUE, grid=TRUE, show.thres=TRUE, legacy.axes = TRUE, reuse.auc = TRUE,
+# print.thres = c(0.30,0.35, 0.40, 0.45,0.48, 0.50,0.55, 0.60),#
+print.auc = TRUE, print.thres.col = "blue", ci=TRUE, ci.type="bars", print.thres.cex = 0.7, main = paste("ROC curve using","(N = ",nrow(aSAH),")") )
+
+
 
 # Conclusão
 
