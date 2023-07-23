@@ -2,13 +2,13 @@
 titulo: "Análise de Dados Categorizados"
 subtitulo: "Trabalho Final"
 aluno1:  "Carolina Musso 18/0047850"
-aluno2: "Juliana Rosa"
-orientador: "Maria Tereza Leão"
+aluno2: "Juliana Magalhães Rosa 18/0020935"
+orientador: "Maria Teresa Leão"
 ano: "1/2023"
-referencias: aux/referencias.bib
+referencias: auxiliar/referencias.bib
 output: 
   bookdown::pdf_document2:
-    template: aux/template.tex
+    template: auxiliar/template.tex
 ---
 
 ```{r setup, include=FALSE}
@@ -17,12 +17,12 @@ knitr::opts_chunk$set(echo = FALSE,
                       message = FALSE)
 ```
 
-```{r bibliotecas}
+```{r bibliotecas, include=FALSE}
 
-rm(list = ls()) #will clear all objects includes hidden objects.
-options(rstudio.help.showDataPreview = FALSE)
+#rm(list = ls()) #will clear all objects includes hidden objects.
+#options(rstudio.help.showDataPreview = FALSE)
 # Carregando bibliotecas ---------
-pacman::p_load(tidyverse, rio, papeR, patchwork, kableExtra, pROC)
+pacman::p_load(tidyverse, dplyr, rio, papeR, patchwork, kableExtra, pROC)
 
 
 # Bases -----
@@ -39,10 +39,10 @@ names(amostra) <- c("ID", "idade", "status", "casa", "setor", "save" )
 
 amostra_trat <- amostra %>% 
   mutate(status=factor(status, 
-                       labels=c("Superior", "Médio", "Inferior")), 
-         casa=factor(casa, labels=c("Não", "Sim")), 
+                       labels=c("Superior", "Medio", "Inferior")), 
+         casa=factor(casa, labels=c("Nao", "Sim")), 
          setor=factor(setor, levels=c(1,0), labels=c("B", "A")),
-        save=factor(save, labels=c("Não", "Sim"))) %>% 
+        save=factor(save, labels=c("Nao", "Sim"))) %>% 
   as.data.frame()
 ```
 
@@ -52,45 +52,49 @@ amostra_trat <- amostra %>%
 
 A habilidade e a possibilidade de poupar dinheiro pode estar relacionada a diversos fatores. \citeonline{economics} cita a idade, poder aquisitivo, desenvolvimento econômico e inflação como possíveis questões associadas. 
 
-Este trabalho visa avaliar fatores associados a um chefe de ter familia ter ou não poupança por meio da seleção de um modelo de regressão logística. 
+Este trabalho visa avaliar fatores associados à posse de conta poupança por parte de pacientes de uma rede hospitalar. Isso será feito por meio da seleção de um modelo de regressão logística. 
 
 # Metodologia
 
 
 ## Variáveis 
 
-A variável resposta analisada nesse estudo que tentará ser modelada é a variável qualitativa nominal binária "Porrui conta popuança". 
+A variável resposta analisada nesse estudo é qualitativa nominal binária, "Conta popuança". 
 
-As variáveis explicativas (ou os fatores possíveismente associados) são:
-- Idade, variável quantitativa medida em anos. 
-- Status socioeconômico, variável qualitativa ordinal medida em: 1 - superior, 2 - médio , 3 - inferior.
-- Possuir casa própria: variável qualitativa nominal (binária, onde "sim" corresponde a casa própria quitada.)
-- Setor da cidade em que habita: Variável qualitativa nominal (Setor A ou B)
+As variáveis explicativas (ou os fatores possivelmente associados) são:
+
+- Idade: variável quantitativa discreta medida em anos;
+
+- Status socioeconômico: variável qualitativa ordinal medida em 1 = superior, 2 = médio , 3 = inferior;
+
+- Possui casa própria: variável qualitativa nominal binária, medida em 2 = não ou sim, mas ainda pagando financiamento e 2= sim e quitada;
+
+- Setor da cidade: variável qualitativa nominal medida em 1 = setor A; 0= setor B.
 
 
 ## Amostra
 
-Para este trabalho, uma sub-amostra aleatória simples sem reposição foi selecionada a partir de uma amostra de 196 chefes de família. Os IDS selecionados nesse trabalho foram:
+Para este trabalho, uma sub-amostra aleatória simples sem reposição de tamanho 100 foi selecionada a partir de uma amostra de 196 pacientes. Os IDS selecionados nesse trabalho foram: 2, 3, 4, 5, 6, 9, 13, 16, 18, 20, 21, 24, 27, 29, 32, 33, 35, 36, 40, 41, 42, 43, 47, 49, 53, 54, 55, 57, 58, 60, 65, 68, 69, 71, 73, 74, 76, 80, 81, 82, 83, 85, 89, 91, 92, 99, 100, 101, 102, 103, 104, 109, 110, 111, 113, 114, 115, 116, 118, 122, 128, 129, 130, 131, 134, 135, 136, 137, 138, 140, 143, 144, 146, 150, 153, 154, 158, 161, 162, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 179, 180, 182, 183, 184, 185, 187, 191, 192, 194, 196.
 
-```{r}
+```{r include=FALSE}
 sort(amostra$ID)
 ```
 
 ## Análise
 
-A regressão logística é um modelo estatístico utilizado inicialmente para prever a probabilidade de ocorrência de um evento binário, como é o caso da variável resposta deste trabalho. Para tal, os conceitos da regressão linear são expandidos para comportar uma variável entre [0,1] (a probabilidade), utilizando a função logito.
+A regressão logística é um modelo estatístico utilizado para casos em que a variável resposta é categorizada. O mais comum é que essa variável seja binária, como é o caso do presente estudo. O funcionamento dessa técnica consiste em descrever a probabilidade de ocorrência de um evento, que nesse caso será a posse de poupança.
 
-Assim,  modela-se a média da variável resposta por 
+Assim,  modela-se a média da variável resposta a partir da função Logística:
 
-$\pi = \frac{exp{(\beta_0 + |beta_1 X_i)}}{1-(\beta_0 + |beta_1 X_i)}$
+$$\pi(x_i) = \frac{exp{(\beta_0 + \beta_1 x_{i1}+...+\beta_{k-1}x_{i(k-1)})}}{1+exp{(\beta_0 + \beta_1 x_{i1}+...+\beta_{k-1}x_{i(k-1)})}}$$
+onde $x_i$ é um vetor com os elementos $x_{ij}$, os quais representam possíveis valores das variáveis explicativas $X_j$; $\beta_j$ é um parâmetro regressivo; $k$ é o número de parâmetros do modelo com $j=0, 1, 2,...,k-1$.
 
 # Resultados
 
+## Análise Descritiva Gráficos
 
-## Análise descritiva gráficos
 
-
-### Idade
+### Distribuição de Idades dos Pacientes
 ```{r}
 idade_by <- amostra_trat %>% 
   ggplot(aes(x=save, y=idade, fill=save))+
@@ -99,7 +103,7 @@ idade_by <- amostra_trat %>%
    #geom_jitter(color="black", size=0.4, alpha=0.9) +
    theme_classic(base_size = 14)+
    theme(legend.position = "none")+
-   labs(x= "Tem Poupança", y= "Idade (Anos)")
+   labs(x= "Possui Poupanca", y= "Idade (anos)")
    
 
 
@@ -122,7 +126,7 @@ idade <- amostra_trat %>%
  idade_by +  inset_element(idade, left = 0.01, bottom = 0.45, right = 0.25, top = 1)
 ```
 
-### Status Socio econômico
+### Proporção de Pacientes nos Status Socioeconômicos
 
 ```{r}
 status_by <- amostra_trat %>% 
@@ -132,7 +136,7 @@ status_by <- amostra_trat %>%
    #geom_jitter(color="black", size=0.4, alpha=0.9) +
    theme_classic(base_size = 14)+
    theme(legend.position = "none")+
-   labs(x= "Tem Poupança", y= "Proporção")
+   labs(x= "Possui Poupanca", y= "Proporcao")
    
 
 
@@ -143,8 +147,7 @@ status <-   amostra_trat %>%
   theme_classic(base_size = 14)+
   theme( axis.text.x = element_blank(),
         axis.ticks = element_blank())+
-  labs(x= "", y= "")+
-  ggtitle("Geral")
+  labs(x= "", y= "", title="Geral")
 ```
 
 ```{r, out.width="90%"}
@@ -153,7 +156,7 @@ status <-   amostra_trat %>%
 
 
 
-### Possui casa própria quitada
+### Proporção de Pacientes com Casa Própria Quitada
 
 ```{r}
 casa_by <- amostra_trat %>% 
@@ -163,7 +166,7 @@ casa_by <- amostra_trat %>%
    #geom_jitter(color="black", size=0.4, alpha=0.9) +
    theme_classic(base_size = 14)+
    theme(legend.position = "none")+
-   labs(x= "Tem Poupança", y= "Proporção")
+   labs(x= "Possui Poupanca", y= "Proporcao")
    
 
 
@@ -182,7 +185,7 @@ casa<-   amostra_trat %>%
  casa_by +  casa +   plot_layout(widths = c(2, 1))
 ```
 
-### Setor da cidade
+### Proporção de Pacientes nos Setores da Cidade
 
 ```{r}
 setor_by <- amostra_trat %>% 
@@ -192,7 +195,7 @@ setor_by <- amostra_trat %>%
    #geom_jitter(color="black", size=0.4, alpha=0.9) +
    theme_classic(base_size = 14)+
    theme(legend.position = "none")+
-   labs(x= "Tem Poupança", y= "Proporção")
+   labs(x= "Possui Poupanca", y= "Proporcao")
    
 
 
@@ -211,32 +214,32 @@ setor <-   amostra_trat %>%
  setor_by +  setor + plot_layout(widths = c(2, 1))
 ```
 
-## Análise descritiva Tabelas
+## Análise Descritiva Tabelas
 
 ```{r}
-names(amostra_trat) <- c("ID", "Idade", "Status Socioeconômico", "Casa Própria", "Setor", "Poupança" )
+names(amostra_trat) <- c("ID", "Idade", "Status Socioeconomico", "Casa Propria", "Setor", "Poupanca" )
 
 ```
 
 ```{r}
 
 Tab1 <- papeR::summarize(amostra_trat[,-1],
-                 type = "factor", group = "Poupança")
+                 type = "factor", group = "Poupanca")
 ```
 
 ```{r, echo = FALSE, cache=F, results = 'asis'}
 
-xtable(Tab1)
+xtable(Tab1, caption="Frequências dos Fatores Explicativos por Posse de Poupanca.")
 ```
 
 ```{r}
 Tab2 <- papeR::summarize(amostra_trat[,-1],
-                 type = "numeric", group = "Poupança")
+                 type = "numeric", group = "Poupanca")
 ```
 
 ```{r, echo = FALSE, cache=F, results = 'asis'}
 
-xtable(Tab2, width = rep("0.5in", 11))
+xtable(Tab2, width = rep("0.5in", 11), caption="Medidas Descritivas para Idade dos Pacientes por Posse de Poupanca.")
 ```
 
 Parametros e interpretacao
@@ -244,34 +247,93 @@ Modelo e residuos
 
 ## Modelagem 
 
-```{r fig.height=5, fig.width=5.2}
-mod1 <- glm(data=amostra, save ~ idade+status+casa+setor, binomial(link = "logit"))
+```{r}
+#Seleção exaustiva
+library(leaps)
+sele1<-regsubsets(Poupanca~.,data=amostra_trat[, -1], nbest=10)
+n_parametros<-as.numeric(rownames(summary(sele1)$which))+1
+s <- summary(sele1)
 
+#Critério R^2
+plot(n_parametros,summary(sele1)$rsq, main="Criterio R2", xlab="Numero de Parametros", ylab="R2")
+
+#Critério R^2 ajustado
+plot(n_parametros,summary(sele1)$adjr2, main="Criterio R2 Ajustado", xlab="Numero de Parametros", ylab="R2 Ajustado")
+
+#Critério Cp
+plot(n_parametros,summary(sele1)$cp, main="Criterio Cp", xlab="Numero de Parametros", ylab="Cp")
+#plot(n_parametros, summary(sele1)$cp, ylim=c(0, 10), main="Critério Cp Ampliado", xlab="Número de Parâmetros", ylab="Cp")
+abline(h=4)
+
+#Critério bic
+plot(n_parametros,summary(sele1)$bic, main="Criterio BIC", xlab="Numero de Parametros", ylab="BIC")
+
+#Modelo com 4 parâmetros (3 variáveis explicativas) parece melhor
+#O de 3 parâmetros poderia ser bom também
+```
+
+```{r}
+#Modelo 6 é o melhor com 3 parâmetros (2 variáveis explicativas)
+#Modelo 16 é o melhor com 4 parâmetros (2 variáveis explicativas)
+s$outmat[6, ]
+s$outmat[16, ]
+
+#com 3 parâmetros fica só com uma das dummies de status socioeconômico
+#faz mais sentido pegar de 4 parâmetros
+
+#o melhor modelo de 4 parâmetros é o que inclui status (as 2 dummies) e idade --> conforme já esperávamos pela significância das associações
+```
+
+
+```{r}
+mod1 <- glm(data=amostra, save ~ idade+status+casa+setor, binomial(link = "logit"))
+mod2 <- glm(data=amostra, save ~ idade+status, binomial(link = "logit"))
+```
+
+```{r}
+#modelo saturado
+mod1$coefficients
+```
+
+```{r}
+#modelo selecionado
+mod2$coefficients
+```
+
+
+```{r fig.height=5, fig.width=5.2}
+#ROC --> avaliação do modelo
 r <- roc( amostra$save,as.vector(fitted.values(mod1)) , 
           grid=TRUE, print.auc = TRUE, percent=T)
 
 
-plot(r ,xlim=c(100,0),ylim=c(0,100), asp = NA, legacy.axes = F, xlab="Especificidade (%)", ylab="Sensibilidade (%)",percent=T,print.auc = TRUE, main="idade+status+casa+setor" )
+plot(r ,xlim=c(100,0),ylim=c(0,100), asp = NA, legacy.axes = F, xlab="Especificidade (%)", ylab="Sensibilidade (%)",percent=T,print.auc = TRUE, main="Curva ROC" )
 
+rr <- roc( amostra$save,as.vector(fitted.values(mod2)) , 
+          grid=TRUE, print.auc = TRUE, percent=T)
+plot(rr ,xlim=c(100,0),ylim=c(0,100), asp = NA, legacy.axes = F, xlab="Especificidade (%)", ylab="Sensibilidade (%)",percent=T,print.auc = TRUE, main="Curva ROC" )
 ```
 
+Como funciona a análise de resíduos para a regressão logística?  
+Fiz igual à linear, mas acho que não é assim...  
+De toda forma, falta reproduzir para o modelo 2 ainda.
 
-
-```{r, out.width="80%"}
-ggroc(r)+ 
-  ggtitle("Receiver Operating Characteristic Curve")+ 
-  ylab("Sensitivity")+ 
-  xlab("Specificity")+
-  geom_segment(
-    aes(x = 1, xend = 0, y = 0, yend = 1), 
-    color = "grey", linetype = "dashed"
-)+
-  scale_y_continuous(expand = c(0, 0))+ 
-  scale_x_reverse(expand = c(0, 0))+
-  theme_classic(base_size=14)
-
+```{r}
+## MODELO 1
+#gráficos residuais
+plot(mod1$fitted.values,mod1$residuals, main="Residuos do Modelo Corrigido vs Valores Ajustados", xlab="Valores Ajustados", ylab="Residuos")
+abline(h=0)
+plot(mod1$residuals, main="Residuos do Modelo Corrigido em Sequencia", xlab="ID", ylab="Residuos")
+qqnorm(mod1$residuals, main="Grafico de Quantis Normais", xlab="Quantis Teoricos", ylab="Residuos")
+qqline(mod1$residuals)
 ```
 
+```{r}
+#testes para resíduos
+library(lmtest)
+bptest(mod1)
+shapiro.test(mod1$residuals) #rejeita
+```
 
 
 # Conclusão
