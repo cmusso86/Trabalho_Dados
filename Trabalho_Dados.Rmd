@@ -24,7 +24,7 @@ knitr::opts_chunk$set(echo = FALSE,
 # Carregando bibliotecas ---------
 pacman::p_load(tidyverse, dplyr, rio, papeR, patchwork, 
                kableExtra, pROC, ExhaustiveSearch, scales,
-               sjPlot, sjmisc)
+               sjPlot, sjmisc, performance)
 
 
 # Bases -----
@@ -461,6 +461,16 @@ p
 
 ```
 
+```{r}
+performance_hosmer(mod1)
+performance_hosmer(mod2)
+performance_hosmer(mod3)
+performance_hosmer(mod3_iter)
+mod3_iter$aic
+mod3$aic
+mod2$aic
+mod1$aic
+```
 
 
 
