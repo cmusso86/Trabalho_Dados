@@ -471,15 +471,7 @@ mod3$aic
 mod2$aic
 mod1$aic
 
-dwtest(mod1)
-dwtest(mod2)
-dwtest(mod3)
-dwtest(mod3_iter)
 
-bptest(mod1)
-bptest(mod2)
-bptest(mod3)
-bptest(mod3_iter)
 
 ```
 
