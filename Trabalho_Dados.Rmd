@@ -13,7 +13,7 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, 
-                      warning = FALSE, 
+                      warning = FALSE,
                       message = FALSE)
 ```
 
@@ -238,7 +238,7 @@ names(amostra_trat) <- c("ID", "Idade", "Status Socioeconomico", "Casa Propria",
 ```{r}
 
 Tab1 <- papeR::summarize(amostra_trat[,-1],
-                 type = "factor", group = "Poupanca")
+                 type = "factor", group = "Poupanca", test="chisq.test")
 ```
 
 ```{r, echo = FALSE, cache=F, results = 'asis'}
@@ -248,7 +248,8 @@ xtable(Tab1, caption="Frequências dos Fatores Explicativos por Posse de Poupanc
 
 ```{r}
 Tab2 <- papeR::summarize(amostra_trat[,-1],
-                 type = "numeric", group = "Poupanca")
+                 type = "numeric", group = "Poupanca", test="wilcox.test")
+
 ```
 
 ```{r, echo = FALSE, cache=F, results = 'asis'}
@@ -261,55 +262,9 @@ Modelo e residuos
 
 ## Modelagem 
 
-```{r}
-#Seleção exaustiva
-# library(leaps)
-# sele1<-regsubsets(Poupanca~.,data=amostra_trat[, -1], nbest=10)
-# n_parametros<-as.numeric(rownames(summary(sele1)$which))+1
-# s <- summary(sele1)
-# 
-# #Critério R^2
-# plot(n_parametros,summary(sele1)$rsq, main="Criterio R2", xlab="Numero de Parametros", ylab="R2")
-# 
-# #Critério R^2 ajustado
-# plot(n_parametros,summary(sele1)$adjr2, main="Criterio R2 Ajustado", xlab="Numero de Parametros", ylab="R2 Ajustado")
-# 
-# #Critério Cp
-# plot(n_parametros,summary(sele1)$cp, main="Criterio Cp", xlab="Numero de Parametros", ylab="Cp")
-# #plot(n_parametros, summary(sele1)$cp, ylim=c(0, 10), main="Critério Cp Ampliado", xlab="Número de Parâmetros", ylab="Cp")
-# abline(h=4)
-# 
-# #Critério bic
-# plot(n_parametros,summary(sele1)$bic, main="Criterio BIC", xlab="Numero de Parametros", ylab="BIC")
-# 
-# #Modelo com 4 parâmetros (3 variáveis explicativas) parece melhor
-# #O de 3 parâmetros poderia ser bom também
+### Seleção de Variáveis
 
-# #Modelo 6 é o melhor com 3 parâmetros (2 variáveis explicativas)
-# #Modelo 16 é o melhor com 4 parâmetros (2 variáveis explicativas)
-# s$outmat[6, ]
-# s$outmat[16, ]
-
-#com 3 parâmetros fica só com uma das dummies de status socioeconômico
-#faz mais sentido pegar de 4 parâmetros
-
-#o melhor modelo de 4 parâmetros é o que inclui status (as 2 dummies) e idade --> conforme já esperávamos pela significância das associações
-
-# mod1 <- glm(data=amostra, save ~ idade+status+casa+setor, binomial(link = "logit"))
-# mod2 <- glm(data=amostra, save ~ idade+status, binomial(link = "logit"))
-
-# outra opcao
-
-# credit_glm0 <- glm(Poupanca~., family=binomial, data=amostra_trat[,-1])
-# credit_glm_back <- step(credit_glm0)
-# summary(credit_glm_back)
-# 
-# credit_glm_for <- step(credit_glm0, direction = c("both"))
-# summary(credit_glm_for)
-```
-
-
-```{r}
+```{r, results='hide'}
 selecao_exaustiva <- ExhaustiveSearch(save ~ idade + 
                                         factor(status) + 
                                         factor(setor) + 
@@ -332,7 +287,8 @@ plot_AIC <- plot_AIC_npar %>%
   ggplot(aes(x=n_par, y=AIC))+
   geom_point()+
   theme_classic(base_size = 16)+
-    scale_x_continuous(limits = c(1, 7))+
+    scale_x_continuous(limits = c(2, 7))+
+  scale_y_continuous(limits = c(115, 150))+
   labs(x="Número de Parâmetros", y="Critério de Informação de Akaike (AIC)")+
   geom_text(data=plot_AIC_npar_labels,
             aes(label=label), size=3, nudge_x = c(-0.6, 0.75, -0.75),
@@ -356,26 +312,14 @@ ggsave("img/AIC.png", width=10)
 
 
 
-# a <- ExhaustiveSearch(save ~ idade + status + setor + casa, data = amostra[,-1], family = "binomial",
-#   performanceMeasure = "AIC")
-# para_plot <- ExhaustiveSearch::resultTable(b) %>% 
-#   mutate(n_par=str_count(Combination, "\\+")+2) %>% 
-#   select(-Combination)
-# plot(para_plot)
-# 
-# par_mod <- a$ranking$featureIDs
-# aic_mod <- a$ranking$performance
-# 
-# getFeatures(a)
-# 
-# n_par <- map_dbl( 1:31, ~{
-#   length(par_mod[[.]])
-# })
-# 
-
 
 ```
-
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.8]{img/AIC.png}
+    \caption{Diagrama de caixas para distribuição de idade entre os grupos sem (azul) e com (verde) poupança. Para comparação, a distribuiçao de idade geral foi adicionada no canto superior esquerdo.}
+    \label{fig:idade}
+\end{figure}
 
 ## Modelos selecionados
 
@@ -390,22 +334,48 @@ mod3 <- glm(save ~ idade + factor(status) +
               factor(casa), data = amostra[,-1], family=binomial(link="logit")) 
 ```
 
+### Modelo 1
 ```{r}
 #modelo saturado
-mod1$coefficients
+broom::tidy(mod1$coefficients) %>% 
+  mutate(OR=round(exp(x), 2)) %>% 
+  kable(format="latex", booktabs = T, 
+        linesep="", 
+        align=c("c"),
+        col.names=c("Variável", "Coeficiente", "OR")) %>% 
+  kable_styling(latex_options = "HOLD_position", position="center", 
+                full_width = F)
 ```
+
+### Modelo 2
 
 ```{r}
 #modelo saturado
-mod2$coefficients
+broom::tidy(mod2$coefficients) %>% 
+  mutate(OR=round(exp(x), 2)) %>% 
+  kable(format="latex", booktabs = T, 
+        linesep="", 
+        align=c("c"),
+        col.names=c("Variável", "Coeficiente", "OR")) %>% 
+  kable_styling(latex_options = "HOLD_position", position="center", 
+                full_width = F)
 ```
 
+### Modelo3
 ```{r}
 #modelo selecionado
-mod3$coefficients
+broom::tidy(mod3$coefficients) %>% 
+  mutate(OR=round(exp(x), 2)) %>% 
+  kable(format="latex", booktabs = T, 
+        linesep="", 
+        align=c("c"),
+        col.names=c("Variável", "Coeficiente", "OR")) %>% 
+  kable_styling(latex_options = "HOLD_position", position="center", 
+                full_width = F)
 ```
 
-```{r fig.height=5, fig.width=5.2}
+```{r results='hide'}
+png('img/roc.png', pointsize=6, width=850, height=800, res=300)
 #ROC --> avaliação do modelo
 roc1 <- roc( amostra$save,as.vector(fitted.values(mod1)) , 
           grid=TRUE, percent=T)
@@ -432,36 +402,85 @@ lines(roc2 ,xlim=c(100,0),ylim=c(0,100), asp = NA, legacy.axes = F,
 lines(roc3 ,xlim=c(100,0),ylim=c(0,100), asp = NA, legacy.axes = F, xlab="Especificidade (%)", ylab="Sensibilidade (%)",percent=T,print.auc = TRUE, main="Curva ROC", col="green", lty = 3)
 
 
-text(20, 40, paste("AUC=", auc1), col="blue")
-text(20, 35, paste("AUC=", auc2), col="red")
-text(20, 30, paste("AUC=", auc3), col="green")
+text(20, 40, paste("AUC(mod1)=", auc1), col="blue")
+text(20, 35, paste("AUC(mod2)=", auc2), col="red")
+text(20, 30, paste("AUC(mod3)=", auc3), col="green")
 
 
 
 ```
 
-```{r}
-mod1_iter <- glm(save ~ idade*factor(status), 
-            data = amostra[,-1], family=binomial(link="logit")) 
-summary(mod1_iter)
 
-mod2_iter <- glm(save ~ idade + factor(setor) +
-                   factor(status) + factor(setor):factor(status), 
-                 data = amostra[,-1], 
-              family=binomial(link="logit"))
-summary(mod2_iter)
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.4]{img/roc.png}
+    \caption{Diagrama de caixas para distribuição de idade entre os grupos sem (azul) e com (verde) poupança. Para comparação, a distribuiçao de idade geral foi adicionada no canto superior esquerdo.}
+    \label{fig:idade}
+\end{figure}
+
+### Refinamento do modelo
+
+Análise de interações
+
+```{r results='hide'}
 
 mod3_iter <- glm(save ~ idade+factor(status)+
               factor(casa)+idade:factor(casa), data = amostra[,-1], 
               family=binomial(link="logit")) 
 summary(mod3_iter)
 
-p <- plot_model(mod3_iter, type="pred", terms=c("idade", "casa"))
-p
+p <- plot_model(mod3_iter, type="pred", terms=c("idade", "casa"), se=FALSE)+
+  theme_classic(base_size = 14)+
+  labs(x="Idade (anos)", y="Tem poupança")+
+  ggtitle("")
+
+ggsave(plot=p, filename = "img/interacao.png", width=10, height=6)
+```
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.6]{img/interacao.png}
+    \caption{Diagrama de caixas para distribuição de idade entre os grupos sem (azul) e com (verde) poupança. Para comparação, a distribuiçao de idade geral foi adicionada no canto superior esquerdo.}
+    \label{fig:idade}
+\end{figure}
+
+```{r}
+png('img/roc_inter.png', pointsize=6, width=850, height=800, res=300)
+#ROC --> avaliação do modelo
+
+
+roc3_inter <- roc( amostra$save,as.vector(fitted.values(mod3_iter)) , 
+          grid=TRUE, percent=T)
+auc3_inter <- comma(as.numeric(roc3_inter$auc), 
+            decimal.mark = ",", accuracy=0.1)
+
+plot(roc3 ,xlim=c(100,0),ylim=c(0,100), asp = NA, legacy.axes = F, xlab="Especificidade (%)", ylab="Sensibilidade (%)",percent=T,print.auc = F, main="Curvas ROC", col="blue")
+
+lines(roc3_inter ,xlim=c(100,0),ylim=c(0,100), asp = NA, legacy.axes = F, 
+      xlab="Especificidade (%)", ylab="Sensibilidade (%)",
+      percent=T,print.auc = TRUE, main="Curva ROC", col="red",
+      lty = 2)
+
+
+
+text(20, 40, paste("AUC(mod3)=", auc1), col="blue")
+text(20, 35, paste("AUC(interação)=", auc3_inter), col="red")
 
 ```
 
-```{r}
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.4]{img/roc_inter.png}
+    \caption{Diagrama de caixas para distribuição de idade entre os grupos sem (azul) e com (verde) poupança. Para comparação, a distribuiçao de idade geral foi adicionada no canto superior esquerdo.}
+    \label{fig:idade}
+\end{figure}
+
+
+
+### Análise de Resíduos
+
+```{r results='hide'}
 performance_hosmer(mod1)
 performance_hosmer(mod2)
 performance_hosmer(mod3)
@@ -481,35 +500,56 @@ Como funciona a análise de resíduos para a regressão logística?
 Fiz igual à linear, mas acho que não é assim...  
 De toda forma, falta reproduzir para o modelo 2 ainda.
 
-```{r}
+```{r results=F}
 ## MODELO 1
-res <- exp(mod1$residuals)/(1+exp(mod1$residuals))
-#gráficos residuais
-plot(mod1$fitted.values,mod1$residuals, main="Residuos do Modelo Corrigido vs Valores Ajustados", xlab="Valores Ajustados", ylab="Residuos")
-abline(h=0)
-plot(mod1$residuals, main="Residuos do Modelo Corrigido em Sequencia", xlab="ID", ylab="Residuos")
-qqnorm(mod1$residuals, main="Grafico de Quantis Normais", xlab="Quantis Teoricos", ylab="Residuos")
-qqline(mod1$residuals)
+
+
+
+graf1_res <- ggplot()+
+  geom_point(aes(mod1$fitted.values,mod1$residuals),size=2, shape=1)+
+  geom_hline(yintercept=0, linetype = 'dashed')+
+  labs(x="Valores Ajustados", y="Residuos")+
+    theme_classic(base_size = 16)
+
+
+ggsave(plot=graf1_res, filename = "img/residuo1.png", width=8, height=6)
+
 ```
 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.6]{img/residuo1.png}
+    \caption{Diagrama de caixas para distribuição de idade entre os grupos sem (azul) e com (verde) poupança. Para comparação, a distribuiçao de idade geral foi adicionada no canto superior esquerdo.}
+    \label{fig:idade}
+\end{figure}
+
 ```{r}
+
+
+graf2_res <- data.frame(x=1:100, y=mod1$residuals ) %>% 
+ggplot()+
+  geom_point(aes(x,y), size=2, shape=1)+
+  geom_hline(yintercept=0, linetype = 'dashed')+
+  labs(x="Valores Ajustados", y="Residuos")+
+    theme_classic(base_size = 16)
+
+ggsave(plot=graf2_res, filename = "img/residuo2.png", width=8, height=6)
+```
+
+```{r, results='hide'}
 #testes para resíduos
 library(lmtest)
-bptest(mod1)
-shapiro.test(mod1$residuals) #rejeita
+bptest(mod3_iter)
 ```
 
 
-```{r}
-data.frame(real = mod1$data$save, 
-           var1=amostra$idade, 
-           var2=amostra$status, 
-           pred=mod1$fitted.values) %>% 
-  mutate(previsao=ifelse(pred>0.7, 1, 0),
-         residual= real-previsao) %>% 
-  ggplot(aes(y=residual,x=pred))+
-  geom_point()
-```
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.6]{img/residuo2.png}
+    \caption{Diagrama de caixas para distribuição de idade entre os grupos sem (azul) e com (verde) poupança. Para comparação, a distribuiçao de idade geral foi adicionada no canto superior esquerdo.}
+    \label{fig:idade}
+\end{figure}
 
 
 # Conclusão
@@ -520,26 +560,4 @@ data.frame(real = mod1$data$save,
 ```{r ref.label=knitr::all_labels(), echo=TRUE, eval=FALSE}
 ```
 
-
-```{r}
-
-library(broom)
-
-# Assuming you have a dataset named 'my_data' with columns 'y', 'x1', and 'x2'
-# Fit the logistic regression model
-model <- glm(vs ~ mpg + cyl + wt, data = mtcars, family = "binomial")
-
-# Extract residuals
-model_residuals <- residuals(model, type = "response")
-
-ggplot(data.frame(residuals = model_residuals), aes(x = residuals)) +
-  geom_histogram(binwidth = 0.1, fill = "lightblue", color = "black") +
-  labs(title = "Histogram of Residuals", x = "Residuals", y = "Frequency")
-
-ggplot(data.frame(fitted = fitted(model), residuals = model_residuals), aes(x = fitted, y = residuals)) +
-  geom_point() +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
-  labs(title = "Residuals vs. Fitted Values", x = "Fitted Values", y = "Residuals")
-
-```
 
