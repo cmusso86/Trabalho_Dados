@@ -22,7 +22,8 @@ knitr::opts_chunk$set(echo = FALSE,
 #rm(list = ls()) #will clear all objects includes hidden objects.
 #options(rstudio.help.showDataPreview = FALSE)
 # Carregando bibliotecas ---------
-pacman::p_load(tidyverse, dplyr, rio, papeR, patchwork, kableExtra, pROC)
+pacman::p_load(tidyverse, dplyr, rio, papeR, patchwork, 
+               kableExtra, pROC, ExhaustiveSearch)
 
 
 # Bases -----
@@ -300,6 +301,88 @@ s$outmat[16, ]
 ```{r}
 mod1 <- glm(data=amostra, save ~ idade+status+casa+setor, binomial(link = "logit"))
 mod2 <- glm(data=amostra, save ~ idade+status, binomial(link = "logit"))
+```
+
+
+```{r}
+# outra opcao
+
+credit_glm0 <- glm(Poupanca~., family=binomial, data=amostra_trat[,-1])
+credit_glm_back <- step(credit_glm0)
+summary(credit_glm_back)
+```
+
+```{r}
+credit_glm_for <- step(credit_glm0, direction = c("both"))
+summary(credit_glm_for)
+```
+
+
+```{r}
+selecao_exaustiva <- ExhaustiveSearch(save ~ idade + 
+                                        factor(status) + 
+                                        factor(setor) + 
+                                        factor(casa), 
+                                      data = amostra[,-1], family = "binomial",
+                                      performanceMeasure = "AIC")
+
+
+plot_AIC_npar <- ExhaustiveSearch::resultTable(selecao_exaustiva) %>% 
+  mutate(n_par=str_count(Combination, "\\+")+2)
+
+plot_AIC_npar_labels <- plot_AIC_npar %>% 
+  head(3) %>% 
+  mutate(label=str_replace_all(Combination, "factor\\(", ""),
+         label=str_replace_all(label, "\\)", ""), 
+         label=str_squish(label))
+         
+  
+plot_AIC <- plot_AIC_npar %>% 
+  ggplot(aes(x=n_par, y=AIC))+
+  geom_point()+
+  theme_classic(base_size = 16)+
+    scale_x_continuous(limits = c(1, 7))+
+  labs(x="Número de Parâmetros", y="Critério de Informação de Akaike (AIC)")+
+  geom_text(data=plot_AIC_npar_labels,
+            aes(label=label), size=3, nudge_x = c(-0.55, 0.7, -0.7))
+ggsave("img/AIC.png", width=10)
+
+
+
+# a <- ExhaustiveSearch(save ~ idade + status + setor + casa, data = amostra[,-1], family = "binomial",
+#   performanceMeasure = "AIC")
+# para_plot <- ExhaustiveSearch::resultTable(b) %>% 
+#   mutate(n_par=str_count(Combination, "\\+")+2) %>% 
+#   select(-Combination)
+# plot(para_plot)
+# 
+# par_mod <- a$ranking$featureIDs
+# aic_mod <- a$ranking$performance
+# 
+# getFeatures(a)
+# 
+# n_par <- map_dbl( 1:31, ~{
+#   length(par_mod[[.]])
+# })
+# 
+
+
+```
+
+
+
+```{r}
+
+# Realizar a regressão logística com seleção automática de variáveis usando AIC como critério
+modelo_automatico <- step(glm(Poupanca ~ ., data = amostra_trat, family = binomial), direction = "both", trace = 0)
+
+# Acessar todos os modelos gerados durante o processo de seleção
+todos_os_modelos <- attr(modelo_automatico$terms, "all_models")
+
+# Visualizar os AIC de todos os modelos
+modelos_e_aic <- data.frame(AIC = sapply(todos_os_modelos, AIC), Model = 1:length(todos_os_modelos))
+print(modelos_e_aic)
+
 ```
 
 ```{r}
