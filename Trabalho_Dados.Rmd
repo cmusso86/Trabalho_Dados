@@ -24,7 +24,7 @@ knitr::opts_chunk$set(echo = FALSE,
 # Carregando bibliotecas ---------
 pacman::p_load(tidyverse, dplyr, rio, papeR, patchwork, 
                kableExtra, pROC, ExhaustiveSearch, scales,
-               sjPlot, sjmisc, performance)
+               sjPlot, sjmisc, performance,lmtest)
 
 
 # Bases -----
@@ -470,6 +470,17 @@ mod3_iter$aic
 mod3$aic
 mod2$aic
 mod1$aic
+
+dwtest(mod1)
+dwtest(mod2)
+dwtest(mod3)
+dwtest(mod3_iter)
+
+bptest(mod1)
+bptest(mod2)
+bptest(mod3)
+bptest(mod3_iter)
+
 ```
 
 
@@ -480,6 +491,7 @@ De toda forma, falta reproduzir para o modelo 2 ainda.
 
 ```{r}
 ## MODELO 1
+res <- exp(mod1$residuals)/(1+exp(mod1$residuals))
 #gráficos residuais
 plot(mod1$fitted.values,mod1$residuals, main="Residuos do Modelo Corrigido vs Valores Ajustados", xlab="Valores Ajustados", ylab="Residuos")
 abline(h=0)
@@ -496,11 +508,46 @@ shapiro.test(mod1$residuals) #rejeita
 ```
 
 
+```{r}
+data.frame(real = mod1$data$save, 
+           var1=amostra$idade, 
+           var2=amostra$status, 
+           pred=mod1$fitted.values) %>% 
+  mutate(previsao=ifelse(pred>0.7, 1, 0),
+         residual= real-previsao) %>% 
+  ggplot(aes(y=residual,x=pred))+
+  geom_point()
+```
+
+
 # Conclusão
 
 \newpage
 # Apêndice
 
 ```{r ref.label=knitr::all_labels(), echo=TRUE, eval=FALSE}
+```
+
+
+```{r}
+
+library(broom)
+
+# Assuming you have a dataset named 'my_data' with columns 'y', 'x1', and 'x2'
+# Fit the logistic regression model
+model <- glm(vs ~ mpg + cyl + wt, data = mtcars, family = "binomial")
+
+# Extract residuals
+model_residuals <- residuals(model, type = "response")
+
+ggplot(data.frame(residuals = model_residuals), aes(x = residuals)) +
+  geom_histogram(binwidth = 0.1, fill = "lightblue", color = "black") +
+  labs(title = "Histogram of Residuals", x = "Residuals", y = "Frequency")
+
+ggplot(data.frame(fitted = fitted(model), residuals = model_residuals), aes(x = fitted, y = residuals)) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "Residuals vs. Fitted Values", x = "Fitted Values", y = "Residuals")
+
 ```
 
