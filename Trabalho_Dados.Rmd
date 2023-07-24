@@ -89,12 +89,16 @@ Assim,  modela-se a média da variável resposta a partir da função Logística
 $$\pi(x_i) = \frac{exp{(\beta_0 + \beta_1 x_{i1}+...+\beta_{k-1}x_{i(k-1)})}}{1+exp{(\beta_0 + \beta_1 x_{i1}+...+\beta_{k-1}x_{i(k-1)})}}$$
 onde $x_i$ é um vetor com os elementos $x_{ij}$, os quais representam possíveis valores das variáveis explicativas $X_j$; $\beta_j$ é um parâmetro regressivo; $k$ é o número de parâmetros do modelo com $j=0, 1, 2,...,k-1$.
 
+\newpage
 # Resultados
 
-## Análise Descritiva Gráficos
+## Análise Descritiva: Gráficos
 
 
 ### Distribuição de Idades dos Pacientes
+
+Podemos observar na Figura \ref{fig:idade} a distribuição das idade entre cada grupo de interesse (tem ou não tem poupança). 
+
 ```{r}
 idade_by <- amostra_trat %>% 
   ggplot(aes(x=save, y=idade, fill=save))+
@@ -120,11 +124,22 @@ idade <- amostra_trat %>%
          panel.border = element_rect(colour = "black", fill=NA))+
    labs(x= "", y= "")+
   ggtitle("Geral")
+
+ 
+ fig_id <-  idade_by +  inset_element(idade, left = 0.01, bottom = 0.45, right = 0.25, top = 1)
+
+ ggsave(plot=fig_id, filename = "img/idade.png")
 ```
 
-```{r, out.width="90%"}
- idade_by +  inset_element(idade, left = 0.01, bottom = 0.45, right = 0.25, top = 1)
-```
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.65]{img/idade.png}
+    \caption{Diagrama de caixas para distribuição de idade entre os grupos sem (azul) e com (verde) poupança. Para comparação, a distribuiçao de idade geral foi adicionada no canto superior esquerdo.}
+    \label{fig:idade}
+\end{figure}
+
+
 
 ### Proporção de Pacientes nos Status Socioeconômicos
 
@@ -148,12 +163,9 @@ status <-   amostra_trat %>%
   theme( axis.text.x = element_blank(),
         axis.ticks = element_blank())+
   labs(x= "", y= "", title="Geral")
-```
 
-```{r, out.width="90%"}
- status_by +  status+  plot_layout(widths = c(2, 1))
-```
 
+```
 
 
 ### Proporção de Pacientes com Casa Própria Quitada
@@ -181,7 +193,7 @@ casa<-   amostra_trat %>%
   ggtitle("Geral")
 ```
 
-```{r, out.width="90%"}
+```{r fig:idade, out.width="90%"}
  casa_by +  casa +   plot_layout(widths = c(2, 1))
 ```
 
