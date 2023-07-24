@@ -22,7 +22,9 @@ knitr::opts_chunk$set(echo = FALSE,
 #rm(list = ls()) #will clear all objects includes hidden objects.
 #options(rstudio.help.showDataPreview = FALSE)
 # Carregando bibliotecas ---------
-pacman::p_load(tidyverse, dplyr, rio, papeR, patchwork, kableExtra, pROC)
+pacman::p_load(tidyverse, dplyr, rio, papeR, patchwork, 
+               kableExtra, pROC, ExhaustiveSearch, scales,
+               sjPlot, sjmisc)
 
 
 # Bases -----
@@ -67,7 +69,7 @@ As variáveis explicativas (ou os fatores possivelmente associados) são:
 
 - Status socioeconômico: variável qualitativa ordinal medida em 1 = superior, 2 = médio , 3 = inferior;
 
-- Possui casa própria: variável qualitativa nominal binária, medida em 2 = não ou sim, mas ainda pagando financiamento e 2= sim e quitada;
+- Possui casa própria: variável qualitativa nominal binária, medida em 1 = não ou sim, mas ainda pagando financiamento e 2= sim e quitada;
 
 - Setor da cidade: variável qualitativa nominal medida em 1 = setor A; 0= setor B.
 
@@ -261,45 +263,131 @@ Modelo e residuos
 
 ```{r}
 #Seleção exaustiva
-library(leaps)
-sele1<-regsubsets(Poupanca~.,data=amostra_trat[, -1], nbest=10)
-n_parametros<-as.numeric(rownames(summary(sele1)$which))+1
-s <- summary(sele1)
+# library(leaps)
+# sele1<-regsubsets(Poupanca~.,data=amostra_trat[, -1], nbest=10)
+# n_parametros<-as.numeric(rownames(summary(sele1)$which))+1
+# s <- summary(sele1)
+# 
+# #Critério R^2
+# plot(n_parametros,summary(sele1)$rsq, main="Criterio R2", xlab="Numero de Parametros", ylab="R2")
+# 
+# #Critério R^2 ajustado
+# plot(n_parametros,summary(sele1)$adjr2, main="Criterio R2 Ajustado", xlab="Numero de Parametros", ylab="R2 Ajustado")
+# 
+# #Critério Cp
+# plot(n_parametros,summary(sele1)$cp, main="Criterio Cp", xlab="Numero de Parametros", ylab="Cp")
+# #plot(n_parametros, summary(sele1)$cp, ylim=c(0, 10), main="Critério Cp Ampliado", xlab="Número de Parâmetros", ylab="Cp")
+# abline(h=4)
+# 
+# #Critério bic
+# plot(n_parametros,summary(sele1)$bic, main="Criterio BIC", xlab="Numero de Parametros", ylab="BIC")
+# 
+# #Modelo com 4 parâmetros (3 variáveis explicativas) parece melhor
+# #O de 3 parâmetros poderia ser bom também
 
-#Critério R^2
-plot(n_parametros,summary(sele1)$rsq, main="Criterio R2", xlab="Numero de Parametros", ylab="R2")
-
-#Critério R^2 ajustado
-plot(n_parametros,summary(sele1)$adjr2, main="Criterio R2 Ajustado", xlab="Numero de Parametros", ylab="R2 Ajustado")
-
-#Critério Cp
-plot(n_parametros,summary(sele1)$cp, main="Criterio Cp", xlab="Numero de Parametros", ylab="Cp")
-#plot(n_parametros, summary(sele1)$cp, ylim=c(0, 10), main="Critério Cp Ampliado", xlab="Número de Parâmetros", ylab="Cp")
-abline(h=4)
-
-#Critério bic
-plot(n_parametros,summary(sele1)$bic, main="Criterio BIC", xlab="Numero de Parametros", ylab="BIC")
-
-#Modelo com 4 parâmetros (3 variáveis explicativas) parece melhor
-#O de 3 parâmetros poderia ser bom também
-```
-
-```{r}
-#Modelo 6 é o melhor com 3 parâmetros (2 variáveis explicativas)
-#Modelo 16 é o melhor com 4 parâmetros (2 variáveis explicativas)
-s$outmat[6, ]
-s$outmat[16, ]
+# #Modelo 6 é o melhor com 3 parâmetros (2 variáveis explicativas)
+# #Modelo 16 é o melhor com 4 parâmetros (2 variáveis explicativas)
+# s$outmat[6, ]
+# s$outmat[16, ]
 
 #com 3 parâmetros fica só com uma das dummies de status socioeconômico
 #faz mais sentido pegar de 4 parâmetros
 
 #o melhor modelo de 4 parâmetros é o que inclui status (as 2 dummies) e idade --> conforme já esperávamos pela significância das associações
+
+# mod1 <- glm(data=amostra, save ~ idade+status+casa+setor, binomial(link = "logit"))
+# mod2 <- glm(data=amostra, save ~ idade+status, binomial(link = "logit"))
+
+# outra opcao
+
+# credit_glm0 <- glm(Poupanca~., family=binomial, data=amostra_trat[,-1])
+# credit_glm_back <- step(credit_glm0)
+# summary(credit_glm_back)
+# 
+# credit_glm_for <- step(credit_glm0, direction = c("both"))
+# summary(credit_glm_for)
 ```
 
 
 ```{r}
-mod1 <- glm(data=amostra, save ~ idade+status+casa+setor, binomial(link = "logit"))
-mod2 <- glm(data=amostra, save ~ idade+status, binomial(link = "logit"))
+selecao_exaustiva <- ExhaustiveSearch(save ~ idade + 
+                                        factor(status) + 
+                                        factor(setor) + 
+                                        factor(casa), 
+                                      data = amostra[,-1], family = "binomial",
+                                      performanceMeasure = "AIC")
+
+
+plot_AIC_npar <- ExhaustiveSearch::resultTable(selecao_exaustiva) %>% 
+  mutate(n_par=str_count(Combination, "\\+")+2)
+
+plot_AIC_npar_labels <- plot_AIC_npar %>% 
+  head(3) %>% 
+  mutate(label=str_replace_all(Combination, "factor\\(", ""),
+         label=str_replace_all(label, "\\)", ""), 
+         label=str_squish(label))
+         
+  
+plot_AIC <- plot_AIC_npar %>% 
+  ggplot(aes(x=n_par, y=AIC))+
+  geom_point()+
+  theme_classic(base_size = 16)+
+    scale_x_continuous(limits = c(1, 7))+
+  labs(x="Número de Parâmetros", y="Critério de Informação de Akaike (AIC)")+
+  geom_text(data=plot_AIC_npar_labels,
+            aes(label=label), size=3, nudge_x = c(-0.6, 0.75, -0.75),
+            fontface="bold")+
+  geom_curve(data=plot_AIC_npar_labels[1,],
+             aes(x =n_par*0.85, y = AIC*0.997, xend = n_par, 
+                 yend = AIC*0.997),
+             arrow = arrow(length = unit(0.015, "npc")),
+             curvature = 0.5)+
+  geom_curve(data=plot_AIC_npar_labels[3,],
+             aes(x =n_par*0.85, y = AIC*1.003, xend = n_par, 
+                 yend = AIC*1.003),
+             arrow = arrow(length = unit(0.015, "npc")),
+             curvature = -0.7)+
+   geom_curve(data=plot_AIC_npar_labels[2,],
+             aes(x =n_par*1.15, y = AIC*0.997, xend = n_par, 
+                 yend = AIC*0.997),
+             arrow = arrow(length = unit(0.015, "npc")),
+             curvature = -0.7)
+ggsave("img/AIC.png", width=10)
+
+
+
+# a <- ExhaustiveSearch(save ~ idade + status + setor + casa, data = amostra[,-1], family = "binomial",
+#   performanceMeasure = "AIC")
+# para_plot <- ExhaustiveSearch::resultTable(b) %>% 
+#   mutate(n_par=str_count(Combination, "\\+")+2) %>% 
+#   select(-Combination)
+# plot(para_plot)
+# 
+# par_mod <- a$ranking$featureIDs
+# aic_mod <- a$ranking$performance
+# 
+# getFeatures(a)
+# 
+# n_par <- map_dbl( 1:31, ~{
+#   length(par_mod[[.]])
+# })
+# 
+
+
+```
+
+
+## Modelos selecionados
+
+```{r}
+mod1 <- glm(save ~ idade + factor(status), 
+            data = amostra[,-1], family=binomial(link="logit")) 
+
+mod2 <- glm(save ~ idade + factor(status) + 
+              factor(setor), data = amostra[,-1], family=binomial(link="logit"))
+
+mod3 <- glm(save ~ idade + factor(status) + 
+              factor(casa), data = amostra[,-1], family=binomial(link="logit")) 
 ```
 
 ```{r}
@@ -308,23 +396,74 @@ mod1$coefficients
 ```
 
 ```{r}
-#modelo selecionado
+#modelo saturado
 mod2$coefficients
+```
+
+```{r}
+#modelo selecionado
+mod3$coefficients
 ```
 
 
 ```{r fig.height=5, fig.width=5.2}
 #ROC --> avaliação do modelo
-r <- roc( amostra$save,as.vector(fitted.values(mod1)) , 
-          grid=TRUE, print.auc = TRUE, percent=T)
+roc1 <- roc( amostra$save,as.vector(fitted.values(mod1)) , 
+          grid=TRUE, percent=T)
+auc1<-comma(as.numeric(roc1$auc), 
+            decimal.mark = ",", accuracy=0.1)
+
+roc2 <- roc( amostra$save,as.vector(fitted.values(mod2)) , 
+          grid=TRUE, percent=T)
+auc2 <-comma(as.numeric(roc2$auc), 
+            decimal.mark = ",", accuracy=0.1)
+
+roc3 <- roc( amostra$save,as.vector(fitted.values(mod3)) , 
+          grid=TRUE, percent=T)
+auc3 <- comma(as.numeric(roc3$auc), 
+            decimal.mark = ",", accuracy=0.1)
+
+plot(roc1 ,xlim=c(100,0),ylim=c(0,100), asp = NA, legacy.axes = F, xlab="Especificidade (%)", ylab="Sensibilidade (%)",percent=T,print.auc = F, main="Curvas ROC", col="blue")
+
+lines(roc2 ,xlim=c(100,0),ylim=c(0,100), asp = NA, legacy.axes = F, 
+      xlab="Especificidade (%)", ylab="Sensibilidade (%)",
+      percent=T,print.auc = TRUE, main="Curva ROC", col="red",
+      lty = 2)
+
+lines(roc3 ,xlim=c(100,0),ylim=c(0,100), asp = NA, legacy.axes = F, xlab="Especificidade (%)", ylab="Sensibilidade (%)",percent=T,print.auc = TRUE, main="Curva ROC", col="green", lty = 3)
 
 
-plot(r ,xlim=c(100,0),ylim=c(0,100), asp = NA, legacy.axes = F, xlab="Especificidade (%)", ylab="Sensibilidade (%)",percent=T,print.auc = TRUE, main="Curva ROC" )
+text(20, 40, paste("AUC=", auc1), col="blue")
+text(20, 35, paste("AUC=", auc2), col="red")
+text(20, 30, paste("AUC=", auc3), col="green")
 
-rr <- roc( amostra$save,as.vector(fitted.values(mod2)) , 
-          grid=TRUE, print.auc = TRUE, percent=T)
-plot(rr ,xlim=c(100,0),ylim=c(0,100), asp = NA, legacy.axes = F, xlab="Especificidade (%)", ylab="Sensibilidade (%)",percent=T,print.auc = TRUE, main="Curva ROC" )
+
+
 ```
+
+```{r}
+mod1_iter <- glm(save ~ idade*factor(status), 
+            data = amostra[,-1], family=binomial(link="logit")) 
+summary(mod1_iter)
+
+mod2_iter <- glm(save ~ idade + factor(setor) +
+                   factor(status) + factor(setor):factor(status), 
+                 data = amostra[,-1], 
+              family=binomial(link="logit"))
+summary(mod2_iter)
+
+mod3_iter <- glm(save ~ idade+factor(status)+
+              factor(casa)+idade:factor(casa), data = amostra[,-1], 
+              family=binomial(link="logit")) 
+summary(mod3_iter)
+
+p <- plot_model(mod3_iter, type="pred", terms=c("idade", "casa"))
+p
+
+```
+
+
+
 
 Como funciona a análise de resíduos para a regressão logística?  
 Fiz igual à linear, mas acho que não é assim...  
