@@ -52,7 +52,7 @@ amostra_trat <- amostra %>%
 
 # Introdução e Objetivos
 
-A habilidade e a possibilidade de poupar dinheiro pode estar relacionada a diversos fatores. \citeonline{economics} cita a idade, poder aquisitivo, desenvolvimento econômico e inflação como possíveis questões associadas. 
+A habilidade e a possibilidade de poupar dinheiro pode estar relacionada a diversos fatores. \citeonline{economics}  cita a idade, poder aquisitivo, desenvolvimento econômico e inflação como possíveis questões associadas. 
 
 Este trabalho visa avaliar fatores associados à posse de conta poupança por parte de pacientes de uma rede hospitalar. Isso será feito por meio da seleção de um modelo de regressão logística. 
 
@@ -99,13 +99,13 @@ onde $x_i$ é um vetor com os elementos $x_{ij}$, os quais representam possívei
 
 ### Distribuição de Idades dos Pacientes
 
-Podemos observar na Figura \ref{fig:idade} a distribuição das idade entre cada grupo de interesse (tem ou não tem poupança). 
+Na Figura 1, podemos observar a distribuição das idades em cada grupo de interesse, ou seja, aqueles que possuem ou não uma poupança. Notamos que o grupo sem poupança tende a ser composto por pessoas mais jovens, com uma mediana abaixo de 20 anos, enquanto aqueles com poupança apresentam uma mediana acima de 20 anos, chegando a valores próximos de 60 anos. Ao analisarmos a amostra como um todo, observamos que a idade média é ligeiramente superior a 20 anos, sendo que valores acima de 60 são considerados *outliers* nesse contexto.
 
 ```{r}
 idade_by <- amostra_trat %>% 
   ggplot(aes(x=save, y=idade, fill=save))+
    geom_boxplot()+
-   scale_fill_manual(values=c("#00822E", "#0068B4"))+
+   scale_fill_manual(values=c( "#0068B4", "#00822E"))+
    #geom_jitter(color="black", size=0.4, alpha=0.9) +
    theme_classic(base_size = 14)+
    theme(legend.position = "none")+
@@ -128,15 +128,15 @@ idade <- amostra_trat %>%
   ggtitle("Geral")
 
  
- fig_id <-  idade_by +  inset_element(idade, left = 0.01, bottom = 0.45, right = 0.25, top = 1)
+ box_idade <-  idade_by +  inset_element(idade, left = 0.01, bottom = 0.45, right = 0.25, top = 1)
 
- ggsave(plot=fig_id, filename = "img/idade.png")
+ ggsave(plot=box_idade, filename = "img/idade.png")
 ```
 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[scale=0.65]{img/idade.png}
+    \includegraphics[scale=0.8]{img/idade.png}
     \caption{Diagrama de caixas para distribuição de idade entre os grupos sem (azul) e com (verde) poupança. Para comparação, a distribuiçao de idade geral foi adicionada no canto superior esquerdo.}
     \label{fig:idade}
 \end{figure}
@@ -145,11 +145,13 @@ idade <- amostra_trat %>%
 
 ### Proporção de Pacientes nos Status Socioeconômicos
 
+Ao analisarmos a amostra por grupo, levando em consideração a proporção de pessoas em diferentes níveis de status econômico (ver Figura \ref{fig:status}), notamos que o grupo sem poupança apresenta uma maior proporção de pessoas com status econômico inferior em relação ao esperado na amostra total (representado no subgráfico "Geral"). Por outro lado, o grupo com poupança tende a ser composto por pessoas com uma maior proporção de status econômico superior.
+
 ```{r}
 status_by <- amostra_trat %>% 
   ggplot(aes(x=save,fill=factor(status)))+
    geom_bar(position="fill", color="black")+
-   scale_fill_manual(values=c("#00822E", "#7E7E65", "#0068B4"))+
+   scale_fill_manual(values=c("#0068B4", "#7E7E65",  "#00822E"))+
    #geom_jitter(color="black", size=0.4, alpha=0.9) +
    theme_classic(base_size = 14)+
    theme(legend.position = "none")+
@@ -160,23 +162,37 @@ status_by <- amostra_trat %>%
 status <-   amostra_trat %>% 
   ggplot(aes(x=1,fill=factor(status)))+
   geom_bar(position="fill", color="black")+
-  scale_fill_manual("",values=c("#00822E", "#7E7E65", "#0068B4"))+
+  scale_fill_manual("Status",values=c("#0068B4", "#7E7E65", "#00822E"))+
   theme_classic(base_size = 14)+
   theme( axis.text.x = element_blank(),
         axis.ticks = element_blank())+
   labs(x= "", y= "", title="Geral")
 
-
+ bar_plot_status <- status_by +  status +   plot_layout(widths = c(2, 1))
+ 
+ ggsave(plot= bar_plot_status, filename = "img/status.png")
 ```
 
 
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.8]{img/status.png}
+    \caption{Proporção de pessoas com status Superior (verde), Médio (cinza) e Inferior (verde) para cada grupo (com ou sem poupança). Para comparação, a distribuiçao proporções geral foi adicionada ao lado direito.}
+    \label{fig:status}
+\end{figure}
+
 ### Proporção de Pacientes com Casa Própria Quitada
+
+
+Analisando a amostra por grupo, com base na proporção de pessoas que possuem ou não casa própria quitada (Figura \ref{fig:setor}), podemos observar que o grupo sem poupança apresenta uma proporção menor de pessoas com casa quitada em comparação ao grupo com poupança. De maneira geral, na amostra como um todo, constata-se que mais de 50% das pessoas não possuem casa própria quitada.
 
 ```{r}
 casa_by <- amostra_trat %>% 
   ggplot(aes(x=save,fill=factor(casa)))+
    geom_bar(position="fill", color="black")+
-   scale_fill_manual("", values=c("#00822E", "#0068B4"))+
+   scale_fill_manual("", values=c( "#0068B4", "#00822E"))+
    #geom_jitter(color="black", size=0.4, alpha=0.9) +
    theme_classic(base_size = 14)+
    theme(legend.position = "none")+
@@ -187,25 +203,34 @@ casa_by <- amostra_trat %>%
 casa<-   amostra_trat %>% 
   ggplot(aes(x=1,fill=factor(casa)))+
   geom_bar(position="fill", color="black")+
-  scale_fill_manual("", values=c("#00822E", "#0068B4"))+
+  scale_fill_manual("Casa quitada", values=c( "#0068B4", "#00822E"))+
   theme_classic(base_size = 14)+
   theme(axis.text.x = element_blank(),
         axis.ticks = element_blank())+
   labs(x= "", y= "")+
   ggtitle("Geral")
+
+bar_plot_casa <- casa_by +  casa +   plot_layout(widths = c(2, 1))
+ggsave(plot= bar_plot_casa, filename = "img/casa.png")
 ```
 
-```{r fig:idade, out.width="90%"}
- casa_by +  casa +   plot_layout(widths = c(2, 1))
-```
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.8]{img/casa.png}
+    \caption{Proporção de pessoas com casa própria quitada (verde), ou sem casa própria/não quitada (azul) para cada grupo com ou sem poupança. Para comparação, a distribuiçao proporções geral foi adicionada ao lado direito.}
+    \label{fig:casa}
+\end{figure}
+
 
 ### Proporção de Pacientes nos Setores da Cidade
+
+Ao analisarmos a amostra por grupo de acordo com a proporção de pessoas que residem no Setor A ou Setor B (Figura \ref{fig:setor}), observamos que o grupo sem poupança possui uma proporção ligeiramente menor de residentes no Setor A em comparação com o grupo com poupança. De modo geral, na amostra como um todo, aproximadamente 75% das pessoas residem no Setor A.
 
 ```{r}
 setor_by <- amostra_trat %>% 
   ggplot(aes(x=save,fill=factor(setor)))+
    geom_bar(position="fill", color="black")+
-   scale_fill_manual("", values=c("#00822E", "#0068B4"))+
+   scale_fill_manual("", values=c( "#0068B4", "#00822E"))+
    #geom_jitter(color="black", size=0.4, alpha=0.9) +
    theme_classic(base_size = 14)+
    theme(legend.position = "none")+
@@ -216,19 +241,29 @@ setor_by <- amostra_trat %>%
 setor <-   amostra_trat %>% 
   ggplot(aes(x=1,fill=factor(setor)))+
   geom_bar(position="fill", color="black")+
-  scale_fill_manual("", values=c("#00822E", "#0068B4"))+
+  scale_fill_manual("Setor", values=c( "#0068B4", "#00822E"))+
   theme_classic(base_size = 14)+
   theme(axis.text.x = element_blank(),
         axis.ticks = element_blank())+
   labs(x= "", y= "")+
   ggtitle("Geral")
+
+bar_plot_setor <- setor_by +  setor +   plot_layout(widths = c(2, 1))
+ggsave(plot= bar_plot_setor, filename = "img/setor.png")
+
 ```
 
-```{r, out.width="90%"}
- setor_by +  setor + plot_layout(widths = c(2, 1))
-```
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.8]{img/setor.png}
+    \caption{Proporção de pessoas cque residem no setor A (verde) ou Setor B (azul),  para cada grupo com ou sem poupança. Para comparação, a distribuiçao proporções geral foi adicionada ao lado direito.}
+    \label{fig:setor}
+\end{figure}
 
 ## Análise Descritiva Tabelas
+
+A Tabela \@ref(tab:quali) nota-se que, quando analisadas separadamente, há uma associação significativa entre ter ou não poupança e o suatus socio-econômico. 
 
 ```{r}
 names(amostra_trat) <- c("ID", "Idade", "Status Socioeconomico", "Casa Propria", "Setor", "Poupanca" )
@@ -236,29 +271,52 @@ names(amostra_trat) <- c("ID", "Idade", "Status Socioeconomico", "Casa Propria",
 ```
 
 ```{r}
-
 Tab1 <- papeR::summarize(amostra_trat[,-1],
                  type = "factor", group = "Poupanca", test="chisq.test")
+
+names(Tab1 ) <- c("Variável", "Nível", "a", "N", "%", "b", "N ", " %", "c", "p-valor")
+
+Tab1 <- Tab1 %>% as_tibble() %>% select(-c("a", "b", "c")) %>% 
+  mutate(`p-valor`= str_replace(`p-valor`, "<0.001", "0.0001"))
+
+
 ```
 
-```{r, echo = FALSE, cache=F, results = 'asis'}
-
-xtable(Tab1, caption="Frequências dos Fatores Explicativos por Posse de Poupanca.")
+```{r quali}
+knitr::kable(Tab1,format="latex", booktabs = T, 
+        linesep="", 
+        align="c", caption= "Frequências relativas e absolutas das variáveis qualitativas por grupo Com ou Sem poupança. P-valor proveniente do teste de $\\chi^2$ de associação para cada variável.") %>% 
+  kable_styling(latex_options = "HOLD_position", position="center", 
+                full_width = F) %>% 
+  row_spec(c(3,5),hline_after = TRUE)
 ```
+
+
+A Tabela \@ref(tab:num) nota-se que, quando analisadas separadamente, há uma associação significativa entre ter ou não poupança e o suatus socio-econômico.  
+
 
 ```{r}
 Tab2 <- papeR::summarize(amostra_trat[,-1],
                  type = "numeric", group = "Poupanca", test="wilcox.test")
 
+names(Tab2)<-c("Variável", "Tem popuança", "a", "N", "b", "Média", 
+               "DP", "c", "Min", "Q1", "Mediana", "Q3", "Max", "d", "p-valor")
+
+Tab2 <- Tab2 %>% as_tibble() %>% select(-c("a", "b", "c", "d")) %>% 
+  mutate(`p-valor`= str_replace(`p-valor`, "<0.001", "0.0001"))
+
 ```
 
-```{r, echo = FALSE, cache=F, results = 'asis'}
 
-xtable(Tab2, width = rep("0.5in", 11), caption="Medidas Descritivas para Idade dos Pacientes por Posse de Poupanca.")
+```{r num}
+knitr::kable(Tab2,format="latex", booktabs = T, 
+        linesep="", 
+        align="c", caption= "Distribuição de idade grupo Com ou Sem poupança. P-valor proveniente do teste não paramétrico de Wilcoxon.") %>% 
+  kable_styling(latex_options = "HOLD_position", position="center", 
+                full_width = F)
 ```
 
-Parametros e interpretacao
-Modelo e residuos
+
 
 ## Modelagem 
 
@@ -314,11 +372,12 @@ ggsave("img/AIC.png", width=10)
 
 
 ```
+
 \begin{figure}[H]
     \centering
     \includegraphics[scale=0.8]{img/AIC.png}
     \caption{Diagrama de caixas para distribuição de idade entre os grupos sem (azul) e com (verde) poupança. Para comparação, a distribuiçao de idade geral foi adicionada no canto superior esquerdo.}
-    \label{fig:idade}
+    \label{fig:AIC}
 \end{figure}
 
 ## Modelos selecionados
@@ -415,7 +474,7 @@ text(20, 30, paste("AUC(mod3)=", auc3), col="green")
     \centering
     \includegraphics[scale=0.4]{img/roc.png}
     \caption{Diagrama de caixas para distribuição de idade entre os grupos sem (azul) e com (verde) poupança. Para comparação, a distribuiçao de idade geral foi adicionada no canto superior esquerdo.}
-    \label{fig:idade}
+    \label{fig:ROC1}
 \end{figure}
 
 ### Refinamento do modelo
@@ -442,7 +501,7 @@ ggsave(plot=p, filename = "img/interacao.png", width=10, height=6)
     \centering
     \includegraphics[scale=0.6]{img/interacao.png}
     \caption{Diagrama de caixas para distribuição de idade entre os grupos sem (azul) e com (verde) poupança. Para comparação, a distribuiçao de idade geral foi adicionada no canto superior esquerdo.}
-    \label{fig:idade}
+    \label{fig:interacao}
 \end{figure}
 
 ```{r}
@@ -473,7 +532,7 @@ text(20, 35, paste("AUC(interação)=", auc3_inter), col="red")
     \centering
     \includegraphics[scale=0.4]{img/roc_inter.png}
     \caption{Diagrama de caixas para distribuição de idade entre os grupos sem (azul) e com (verde) poupança. Para comparação, a distribuiçao de idade geral foi adicionada no canto superior esquerdo.}
-    \label{fig:idade}
+    \label{fig:ROC2}
 \end{figure}
 
 
@@ -521,7 +580,7 @@ ggsave(plot=graf1_res, filename = "img/residuo1.png", width=8, height=6)
     \centering
     \includegraphics[scale=0.6]{img/residuo1.png}
     \caption{Diagrama de caixas para distribuição de idade entre os grupos sem (azul) e com (verde) poupança. Para comparação, a distribuiçao de idade geral foi adicionada no canto superior esquerdo.}
-    \label{fig:idade}
+    \label{fig:residuo1}
 \end{figure}
 
 ```{r}
@@ -548,7 +607,7 @@ bptest(mod3_iter)
     \centering
     \includegraphics[scale=0.6]{img/residuo2.png}
     \caption{Diagrama de caixas para distribuição de idade entre os grupos sem (azul) e com (verde) poupança. Para comparação, a distribuiçao de idade geral foi adicionada no canto superior esquerdo.}
-    \label{fig:idade}
+    \label{fig:residuo2}
 \end{figure}
 
 
@@ -559,5 +618,6 @@ bptest(mod3_iter)
 
 ```{r ref.label=knitr::all_labels(), echo=TRUE, eval=FALSE}
 ```
+
 
 
