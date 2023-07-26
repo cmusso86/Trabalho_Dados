@@ -130,7 +130,9 @@ idade <- amostra_trat %>%
   ggtitle("Geral")
 
  
- box_idade <-  idade_by +  inset_element(idade, left = 0.01, bottom = 0.45, right = 0.25, top = 1)
+ box_idade <-  idade_by +  inset_element(idade, left = 0.01, 
+                                         bottom = 0.45, 
+                                         right = 0.25, top = 1)
 
  ggsave(plot=box_idade, filename = "img/idade.png")
 ```
@@ -153,7 +155,8 @@ Ao analisarmos a amostra por grupo, levando em consideração a proporção de p
 status_by <- amostra_trat %>% 
   ggplot(aes(x=save,fill=factor(status)))+
    geom_bar(position="fill", color="black")+
-   scale_fill_manual(values=c("#0068B4", "#7E7E65",  "#00822E"), labels=c("Inferior", "Médio", "Superior"))+
+   scale_fill_manual(values=c("#0068B4", "#7E7E65",  "#00822E"),
+                     labels=c("Inferior", "Médio", "Superior"))+
    #geom_jitter(color="black", size=0.4, alpha=0.9) +
    theme_classic(base_size = 14)+
    theme(legend.position = "none")+
@@ -194,7 +197,8 @@ Analisando a amostra por grupo, com base na proporção de pessoas que possuem o
 casa_by <- amostra_trat %>% 
   ggplot(aes(x=save,fill=factor(casa)))+
    geom_bar(position="fill", color="black")+
-   scale_fill_manual("", values=c( "#0068B4", "#00822E"), labels=c("Não", "Sim"))+
+   scale_fill_manual("", values=c( "#0068B4", "#00822E"),
+                     labels=c("Não", "Sim"))+
    #geom_jitter(color="black", size=0.4, alpha=0.9) +
    theme_classic(base_size = 14)+
    theme(legend.position = "none")+
@@ -304,10 +308,12 @@ Já a Tabela \@ref(tab:num) indica associação significante entre idade e posse
 
 ```{r}
 Tab2 <- papeR::summarize(amostra_trat[,-1],
-                 type = "numeric", group = "Poupança", test="wilcox.test")
+                 type = "numeric", group = "Poupança", 
+                 test="wilcox.test")
 
 names(Tab2)<-c("Variável", "Tem Poupança", "a", "N", "b", "Média", 
-               "DP", "c", "Min", "Q1", "Mediana", "Q3", "Max", "d", "p-valor")
+               "DP", "c", "Min", "Q1", "Mediana", "Q3", "Max", "d", 
+               "p-valor")
 
 Tab2 <- Tab2 %>% as_tibble() %>% select(-c("a", "b", "c", "d")) %>% 
   mutate(`p-valor`= str_replace(`p-valor`, "<0.001", "0.0001"))
@@ -318,7 +324,9 @@ Tab2 <- Tab2 %>% as_tibble() %>% select(-c("a", "b", "c", "d")) %>%
 ```{r num}
 knitr::kable(Tab2,format="latex", booktabs = T, 
         linesep="", 
-        align="c", caption= "Distribuição de idade grupo Com ou Sem poupança. P-valor proveniente do teste não paramétrico de Wilcoxon.") %>% 
+        align="c", 
+        caption= "Distribuição de idade grupo Com ou Sem poupança.
+        P-valor proveniente do teste não paramétrico de Wilcoxon.") %>% 
   kable_styling(latex_options = "HOLD_position", position="center", 
                 full_width = F)
 ```
@@ -335,7 +343,8 @@ selecao_exaustiva <- ExhaustiveSearch(save ~ idade +
                                         factor(status) + 
                                         factor(setor) + 
                                         factor(casa), 
-                                      data = amostra[,-1], family = "binomial",
+                                      data = amostra[,-1], 
+                                      family = "binomial",
                                       performanceMeasure = "AIC")
 
 
@@ -395,10 +404,12 @@ mod1 <- glm(save ~ idade + factor(status),
             data = amostra[,-1], family=binomial(link="logit")) 
 
 mod2 <- glm(save ~ idade + factor(status) + 
-              factor(setor), data = amostra[,-1], family=binomial(link="logit"))
+              factor(setor), data = amostra[,-1], 
+            family=binomial(link="logit"))
 
 mod3 <- glm(save ~ idade + factor(status) + 
-              factor(casa), data = amostra[,-1], family=binomial(link="logit")) 
+              factor(casa), data = amostra[,-1], 
+            family=binomial(link="logit")) 
 ```
 
 ### Modelo 1
@@ -413,12 +424,17 @@ prettify(summary(mod1)) %>%
   as_tibble() %>% 
   select(-c("CI (lower)","CI (upper)", "z value", "   " )) %>% 
   rename(`p-value`=`Pr(>|z|)`) %>% 
-  mutate(`p-value`=as.numeric(str_replace(`p-value`, "<0.001", "0.0001"))) %>% 
-  mutate_if(is.numeric, ~comma(., decimal.mark = ",", accuracy=0.0001)) %>% 
+  mutate(`p-value`=as.numeric(str_replace(`p-value`, 
+                                          "<0.001", "0.0001"))) %>% 
+  mutate_if(is.numeric, ~comma(., decimal.mark = ",",
+                               accuracy=0.001)) %>% 
   kable(format="latex", booktabs = T, 
         linesep="", 
         align="c",
-        col.names = c("Parâmetro", "Coeficiente", "OR", "SE", "p-value"), caption="Estimativas dos parâmetros e das razões de chances para o modelo 1.") %>% 
+        col.names = c("Parâmetro", "Coeficiente", "OR", "SE", 
+                      "p-value"),
+        caption="Estimativas dos parâmetros e das razões de 
+        chances para o modelo 1.") %>% 
   kable_styling(latex_options = "HOLD_position", position="center", 
                 full_width = F)
 ```
@@ -435,13 +451,17 @@ prettify(summary(mod2)) %>%
   as_tibble() %>% 
   select(-c("CI (lower)","CI (upper)", "z value", "   " )) %>% 
   rename(`p-value`=`Pr(>|z|)`) %>% 
-  mutate(`p-value`=as.numeric(str_replace(`p-value`, "<0.001", "0.0001"))) %>% 
-  mutate_if(is.numeric, ~comma(., decimal.mark = ",", accuracy=0.0001)) %>% 
+  mutate(`p-value`=as.numeric(str_replace(`p-value`, "<0.001", 
+                                          "0.0001"))) %>% 
+  mutate_if(is.numeric, ~comma(., decimal.mark = ",", 
+                               accuracy=0.001)) %>% 
   kable(format="latex", booktabs = T, 
         linesep="", 
         align="c",
-        col.names = c("Parâmetro", "Coeficiente", "OR", "SE", "p-value"),
-         caption="Estimativas dos parâmetros e das razões de chances para o modelo 2.") %>% 
+        col.names = c("Parâmetro", "Coeficiente", "OR", "SE", 
+                      "p-value"),
+         caption="Estimativas dos parâmetros e das razões de chances
+        para o modelo 2.") %>% 
   kable_styling(latex_options = "HOLD_position", position="center", 
                 full_width = F)
 ```
@@ -450,7 +470,7 @@ prettify(summary(mod2)) %>%
 
 Por fim, foi realizado o ajuste do modelo que incorpora a idade, o status socioeconômico e uma variável indicadora referente à posse de casa própria quitada.
 
-Os valores estimados para os atributos previamente modelados mantêm-se próximos aos apresentados anteriormente (conforme Tabela \ref{tab:mod3}). Entretanto, a variável "casa" apresentou uma razão de chances próximo de 1, indicando independência entre a posse de casa própria e a constituição de uma poupança, entretanto esse parâmetro não foi significativo. 
+Os valores estimados para os atributos previamente modelados mantêm-se próximos aos apresentados anteriormente (conforme Tabela \ref{tab:mod3}). Entretanto, a variável "casa" apresentou uma razão de chances próxima de 1, indicando independência entre a posse de casa própria e a constituição de uma poupança, entretanto esse parâmetro não foi significativo. 
 
 ```{r mod3}
 #modelo saturado
@@ -458,12 +478,17 @@ prettify(summary(mod3)) %>%
   as_tibble() %>% 
   select(-c("CI (lower)","CI (upper)", "z value", "   " )) %>% 
   rename(`p-value`=`Pr(>|z|)`) %>% 
-  mutate(`p-value`=as.numeric(str_replace(`p-value`, "<0.001", "0.0001"))) %>% 
-  mutate_if(is.numeric, ~comma(., decimal.mark = ",", accuracy=0.0001)) %>% 
+  mutate(`p-value`=as.numeric(str_replace(`p-value`, "<0.001", 
+                                          "0.0001"))) %>% 
+  mutate_if(is.numeric, ~comma(., decimal.mark = ",", 
+                               accuracy=0.001)) %>% 
   kable(format="latex", booktabs = T, 
         linesep="", 
         align="c",
-        col.names = c("Parâmetro", "Coeficiente", "OR", "SE", "p-value"), caption="Estimativas dos parâmetros e das razões de chances para o modelo 3.") %>% 
+        col.names = c("Parâmetro", "Coeficiente", "OR", "SE", 
+                      "p-value"), 
+        caption="Estimativas dos parâmetros e das razões de 
+        chances para o modelo 3.") %>% 
   kable_styling(latex_options = "HOLD_position", position="center", 
                 full_width = F)
 ```
@@ -488,12 +513,17 @@ prettify(summary(mod3_iter)) %>%
   as_tibble() %>% 
   select(-c("CI (lower)","CI (upper)", "z value", "   " )) %>% 
   rename(`p-value`=`Pr(>|z|)`) %>% 
-  mutate(`p-value`=as.numeric(str_replace(`p-value`, "<0.001", "0.0001"))) %>% 
-  mutate_if(is.numeric, ~comma(., decimal.mark = ",", accuracy=0.0001)) %>% 
+  mutate(`p-value`=as.numeric(str_replace(`p-value`, "<0.001", 
+                                          "0.0001"))) %>% 
+  mutate_if(is.numeric, ~comma(., decimal.mark = ",", 
+                               accuracy=0.0001)) %>% 
   kable(format="latex", booktabs = T, 
         linesep="", 
         align="c",
-        col.names = c("Parâmetro", "Coeficiente", "OR", "SE", "p-value"), caption="Estimativas dos parâmetros e das razões de chances para o modelo 4.") %>% 
+        col.names = c("Parâmetro", "Coeficiente", "OR", "SE", 
+                      "p-value"), 
+        caption="Estimativas dos parâmetros e das razões de 
+        chances para o modelo 4.") %>% 
   kable_styling(latex_options = "HOLD_position", position="center", 
                 full_width = F)
 ```
@@ -503,9 +533,12 @@ Para uma melhor compreensão dessa interação, analisemos a Figura \ref{fig:int
 ```{r results='hide'}
 
 
-p <- plot_model(mod3_iter, type="pred", terms=c("idade", "casa"), se=FALSE)+
-  scale_color_manual("", labels=c("Não possui casa", "Possui casa"), values=c( "#0068B4", "#00822E"))+
-  scale_fill_manual("", labels=c("Não possui casa", "Possui casa"), values=c( "#0068B4", "#00822E"))+
+p <- plot_model(mod3_iter, type="pred", terms=c("idade", "casa"), 
+                se=FALSE)+
+  scale_color_manual("", labels=c("Não possui casa", "Possui casa"), 
+                     values=c( "#0068B4", "#00822E"))+
+  scale_fill_manual("", labels=c("Não possui casa", "Possui casa"),
+                    values=c( "#0068B4", "#00822E"))+
   theme_classic(base_size = 16)+
   labs(x="Idade (anos)", y="Tem poupança")+
   ggtitle("")
@@ -524,7 +557,7 @@ ggsave(plot=p, filename = "img/interacao.png", width=10, height=6)
 
 ## Avaliação dos modelos
 
-Para essa avaliação utilizou-se a curva ROC (Receiver Operating Characteristic) é uma representação gráfica utilizada para avaliar o desempenho de um modelo de classificação binária. Essa curva é criada plotando a taxa de verdadeiros positivos (sensibilidade) em função da taxa de falsos positivos (1 - especificidade) em diferentes pontos de corte do modelo. Associado a ela, apresentamos a área sob a curva ROC, conhecida como AUC (Area Under the Curve), é um valor numérico que varia de 0 a 1 e resume a habilidade do modelo em distinguir entre as classes. Quanto maior o valor do AUC, melhor é o desempenho do modelo em realizar a classificação correta. Um AUC de 0,5 indica que o modelo é equivalente a um classificador aleatório, enquanto um AUC de 1 representa um classificador perfeito.
+Para essa avaliação utilizou-se a curva ROC (Receiver Operating Characteristic), que é uma representação gráfica utilizada para avaliar o desempenho de um modelo de classificação binária. Essa curva é criada plotando a taxa de verdadeiros positivos (sensibilidade) em função da taxa de falsos positivos (1 - especificidade) em diferentes pontos de corte do modelo. Associado a ela, apresentamos a área sob a curva ROC, conhecida como AUC (Area Under the Curve), é um valor numérico que varia de 0 a 1 e resume a habilidade do modelo em distinguir entre as classes. Quanto maior o valor do AUC, melhor é o desempenho do modelo em realizar a classificação correta. Um AUC de 0,5 indica que o modelo é equivalente a um classificador aleatório, enquanto um AUC de 1 representa um classificador perfeito.
 
 ```{r results='hide'}
 png('img/roc.png', pointsize=6, width=850, height=800, res=300)
@@ -544,14 +577,18 @@ roc3 <- roc( amostra$save,as.vector(fitted.values(mod3)) ,
 auc3 <- comma(as.numeric(roc3$auc), 
             decimal.mark = ",", accuracy=0.1)
 
-plot(roc1 ,xlim=c(100,0),ylim=c(0,100), asp = NA, legacy.axes = F, xlab="Especificidade (%)", ylab="Sensibilidade (%)",percent=T,print.auc = F, main="Curvas ROC", col="blue")
+plot(roc1 ,xlim=c(100,0),ylim=c(0,100), asp = NA, legacy.axes = F,
+     xlab="Especificidade (%)", ylab="Sensibilidade (%)",
+     percent=T, print.auc = F, main="Curvas ROC", col="blue")
 
 lines(roc2 ,xlim=c(100,0),ylim=c(0,100), asp = NA, legacy.axes = F, 
       xlab="Especificidade (%)", ylab="Sensibilidade (%)",
-      percent=T,print.auc = TRUE, main="Curva ROC", col="red",
+      percent=T, print.auc = F, main="Curva ROC", col="red",
       lty = 2)
 
-lines(roc3 ,xlim=c(100,0),ylim=c(0,100), asp = NA, legacy.axes = F, xlab="Especificidade (%)", ylab="Sensibilidade (%)",percent=T,print.auc = TRUE, main="Curva ROC", col="green", lty = 3)
+lines(roc3 ,xlim=c(100,0),ylim=c(0,100), asp = NA, legacy.axes = F,
+      xlab="Especificidade (%)", ylab="Sensibilidade (%)",
+      percent=T,print.auc = F, main="Curva ROC", col="green", lty = 3)
 
 
 text(20, 40, paste("AUC(mod1)=", auc1), col="blue")
@@ -582,7 +619,9 @@ roc3_inter <- roc( amostra$save,as.vector(fitted.values(mod3_iter)) ,
 auc3_inter <- comma(as.numeric(roc3_inter$auc), 
             decimal.mark = ",", accuracy=0.1)
 
-plot(roc3 ,xlim=c(100,0),ylim=c(0,100), asp = NA, legacy.axes = F, xlab="Especificidade (%)", ylab="Sensibilidade (%)",percent=T,print.auc = F, main="Curvas ROC", col="blue")
+plot(roc3 ,xlim=c(100,0),ylim=c(0,100), asp = NA, legacy.axes = F,
+     xlab="Especificidade (%)", ylab="Sensibilidade (%)",percent=T,
+     print.auc = F, main="Curvas ROC", col="blue")
 
 lines(roc3_inter ,xlim=c(100,0),ylim=c(0,100), asp = NA, legacy.axes = F, 
       xlab="Especificidade (%)", ylab="Sensibilidade (%)",
@@ -596,7 +635,7 @@ text(20, 35, paste("AUC(interação)=", auc3_inter), col="red")
 
 ```
 
-Após tentativas de refinamento do modelo, selecionamos mais um modelo, agora com interação. Abaixo ( Figura \ref{fig:ROC2}) comparamos esse modelo com o seu equivalente (sem interação), vemos que houve uma melhora significativa do AUC com a inclusão desse parâmetro.
+Após tentativas de refinamento do modelo, selecionamos mais um modelo, agora com interação. Abaixo (Figura \ref{fig:ROC2}) comparamos esse modelo com o seu equivalente (sem interação), vemos que houve uma melhora significativa do AUC com a inclusão desse parâmetro.
 
 
 \begin{figure}[H]
@@ -610,7 +649,7 @@ Após tentativas de refinamento do modelo, selecionamos mais um modelo, agora co
 
 ### Diagnóstico do modelo
 
-Vemos que para os quatro modelos ajustados, possuímos um bom ajusta bem, uma vez que o teste de Hosmer-Lemeshow não rejeita a hipótese bom ajustamento para nenhum dos modelos. Também apresentamos os valores nominais do Critério de Informação de Akaike e AUC para os três modelos ( Tabela \ref{tab:hosmer}). O modelo escolhido, que apresentou o menor AIC e o maior AUC. 
+Vemos que para os quatro modelos ajustados há um bom ajustamento, uma vez que o teste de Hosmer-Lemeshow não rejeita a hipótese de bom ajustamento para nenhum dos modelos. Também apresentamos os valores nominais do Critério de Informação de Akaike e AUC para os três modelos ( Tabela \ref{tab:hosmer}). O modelo escolhido foi o 4, que apresentou o menor AIC e o maior AUC. 
 
 
 
@@ -628,15 +667,19 @@ mod3I_aic <- mod3_iter$aic
 
 
 
-modelos <- c("Modelo 1", "Modelo 2", "Modelo 3", "Modelo 4 (3 c/ interação)")
-hosmer <- c(mod1_hosmer$p.value,mod2_hosmer$p.value,mod3_hosmer$p.value,mod4_hosmer$p.value )
+modelos <- c("Modelo 1", "Modelo 2", "Modelo 3", 
+             "Modelo 4 (3 c/ interação)")
+hosmer <- c(mod1_hosmer$p.value,
+            mod2_hosmer$p.value,mod3_hosmer$p.value,
+            mod4_hosmer$p.value )
 aic <- c(mod1$aic,mod2$aic,mod3$aic,  mod3_iter$aic)
 auc <- c(auc1, auc2, auc3, auc3_inter)
 
 ajuste_modelos <- cbind(modelos, hosmer, aic, auc) %>% 
   as_tibble() %>% 
   mutate(across(c("hosmer", "aic"), ~as.double(.x))) %>% 
-  mutate(across(c("hosmer", "aic"), ~comma(., decimal.mark = ",", accuracy=0.01)))
+  mutate(across(c("hosmer", "aic"), ~comma(., decimal.mark = ",",
+                                           accuracy=0.01)))
 ```
 
 
@@ -646,7 +689,8 @@ ajuste_modelos %>%
   kable(format="latex", booktabs = T, 
         linesep="", 
         align=c("c"),
-        col.names=c("Modelo", "p-valor Hosmer", "AIC", "AUC"), caption="Teste de Hosmer, AIC e AUC dos modelos ajudtados ") %>% 
+        col.names=c("Modelo", "p-valor Hosmer", "AIC", "AUC"),
+        caption="Teste de Hosmer, AIC e AUC dos modelos ajudtados ") %>% 
   kable_styling(latex_options = "HOLD_position", position="center", 
                 full_width = F)
 ```
@@ -660,7 +704,8 @@ Para esse modelo, observau-se o comportamento dos resíduos. A Figura (\ref{fig:
 
 
 graf1_res <- ggplot()+
-  geom_point(aes(mod3_iter$fitted.values,mod3_iter$residuals),size=2, shape=1)+
+  geom_point(aes(mod3_iter$fitted.values,mod3_iter$residuals),size=2, 
+             shape=1)+
   geom_hline(yintercept=0, linetype = 'dashed')+
   labs(x="Valores Ajustados", y="Residuos")+
     theme_classic(base_size = 16)
@@ -689,7 +734,8 @@ ggplot()+
   labs(x="ID", y="Residuos")+
     theme_classic(base_size = 16)
 
-ggsave(plot=graf2_res, filename = "img/residuo2.png", width=8, height=6)
+ggsave(plot=graf2_res, filename = "img/residuo2.png", width=8,
+       height=6)
 ```
 
 A Figura \ref{fig:residuo2} mostra os resíduos em sequência, os quais se distribuem em duas faixas em torno do zero, sem apresentar padrões de variação no decorrer do sequenciamento. Sendo assim, também está de acordo com o esperado.
@@ -710,6 +756,7 @@ Em resumo, a posse de poupança pelos pacientes da rede hospitalar está correla
 Com base nessas descobertas, o modelo mais adequado para descrever a associação entre essas variáveis e ajustar as probabilidades de possuir poupança foi uma regressão logística envolvendo as três variáveis significativas e a interação idade-casa. Após avaliação e análise residual, concluiu-se que o modelo estava bem ajustado e, portanto, é apropriado para fazer previsões em relação às poupanças dos pacientes.
 
 \newpage
+
 # Apêndice
 
 ```{r ref.label=knitr::all_labels(), echo=TRUE, eval=FALSE}
