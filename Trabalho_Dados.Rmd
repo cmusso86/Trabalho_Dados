@@ -577,13 +577,29 @@ A Figura 7 apresenta os resíduos pelos valores ajustados e está de acordo com 
 
 ```{r results='hide'}
 mod1_hosmer <- performance_hosmer(mod1)
-performance_hosmer(mod2)
-performance_hosmer(mod3)
-performance_hosmer(mod3_iter)
-mod3_iter$aic
-mod3$aic
-mod2$aic
-mod1$aic
+mod2_hosmer <- performance_hosmer(mod2)
+mod3_hosmer <- performance_hosmer(mod3)
+mod4_hosmer <- performance_hosmer(mod3_iter)
+
+mod1_aic <- mod1$aic
+mod2_aic <- mod2$aic
+mod3_aic <- mod3$aic
+mod3I_aic <- mod3_iter$aic
+
+modelos <- c("Modelo 1", "Modelo 2", "Modelo 3", "Modelo 3 com interação")
+hosmer <- c(mod1_hosmer$p.value,mod2_hosmer$p.value,mod3_hosmer$p.value,mod4_hosmer$p.value )
+aic <- c(mod1$aic,mod2$aic,mod3$aic,  mod3_iter$aic)
+
+ajuste_modelos <- cbind(modelos, hosmer, aic) %>% 
+  as_tibble() %>% 
+  mutate(across(c("hosmer", "aic"), ~as.double(.x))) %>% 
+  mutate(across(c("hosmer", "aic"), ~comma(., decimal.mark = ",", accuracy=0.01)))
+```
+
+
+
+```{r}
+
 ```
 
 ```{r results=F}
