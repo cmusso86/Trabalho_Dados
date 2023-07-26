@@ -569,11 +569,12 @@ Ao comparar esse modelo com equilalente (sem interação), vemos que houve uma m
 `
 
 
-### Análise de Resíduos
+### Diagnóstico do modelo
 
-Finalmente, observa-se o comportamento dos resíduos para o modelo selecionado.
+Vemos que para os quatro modelos ajustados, possuímos um bom ajusta bem, uma vez que o teste de Hosmer-Lemeshow não rejeita a hipótese bom ajustamento para nenhum dos modelos. Também apresentamos os valores nominais do Critério de Informação de Akaike e AUC para os três modelos ( Tabela \ref{tab:hosmer}). O modelo escolhido, que apresentou o menor AIC e o maior AUC. 
 
-A Figura 7 apresenta os resíduos pelos valores ajustados e está de acordo com o que seria esperado para um modelo de Regressão Logística: para valores ajustados maiores, os resíduos positivos tendem a diminuir em magnitude, enquanto os negativos tendem a aumentar em magnitude.
+
+Para esse modelo, observau-se o comportamento dos resíduos. A Figura (\ref{fig:residuo1}) apresenta os resíduos pelos valores ajustados e está de acordo com o que seria esperado para um modelo de Regressão Logística: para valores ajustados maiores, os resíduos positivos tendem a diminuir em magnitude, enquanto os negativos tendem a aumentar em magnitude.
 
 ```{r results='hide'}
 mod1_hosmer <- performance_hosmer(mod1)
@@ -586,11 +587,14 @@ mod2_aic <- mod2$aic
 mod3_aic <- mod3$aic
 mod3I_aic <- mod3_iter$aic
 
+
+
 modelos <- c("Modelo 1", "Modelo 2", "Modelo 3", "Modelo 3 com interação")
 hosmer <- c(mod1_hosmer$p.value,mod2_hosmer$p.value,mod3_hosmer$p.value,mod4_hosmer$p.value )
 aic <- c(mod1$aic,mod2$aic,mod3$aic,  mod3_iter$aic)
+auc <- c(auc1, auc2, auc3, auc3_inter)
 
-ajuste_modelos <- cbind(modelos, hosmer, aic) %>% 
+ajuste_modelos <- cbind(modelos, hosmer, aic, auc) %>% 
   as_tibble() %>% 
   mutate(across(c("hosmer", "aic"), ~as.double(.x))) %>% 
   mutate(across(c("hosmer", "aic"), ~comma(., decimal.mark = ",", accuracy=0.01)))
@@ -598,8 +602,14 @@ ajuste_modelos <- cbind(modelos, hosmer, aic) %>%
 
 
 
-```{r}
-
+```{r hosmer}
+ajuste_modelos %>% 
+  kable(format="latex", booktabs = T, 
+        linesep="", 
+        align=c("c"),
+        col.names=c("Modelo", "p-valor Hosmer", "AIC", "AUC"), caption="Teste de Hosmer, AIC e AUC dos modelos ajudtados ") %>% 
+  kable_styling(latex_options = "HOLD_position", position="center", 
+                full_width = F)
 ```
 
 ```{r results=F}
@@ -627,7 +637,6 @@ ggsave(plot=graf1_res, filename = "img/residuo1.png", width=8, height=6)
 \end{figure}
 
 
-
 ```{r}
 
 
@@ -641,7 +650,7 @@ ggplot()+
 ggsave(plot=graf2_res, filename = "img/residuo2.png", width=8, height=6)
 ```
 
-A Figura 8 mostra os resíduos em sequência, os quais se distribuem em duas faixas em torno do zero, sem apresentar padrões de variação no decorrer do sequenciamento. Sendo assim, também está de acordo com o esperado.
+A Figura \ref{fig:residuo2} mostra os resíduos em sequência, os quais se distribuem em duas faixas em torno do zero, sem apresentar padrões de variação no decorrer do sequenciamento. Sendo assim, também está de acordo com o esperado.
 
 ```{r, results='hide'}
 #testes para resíduos
