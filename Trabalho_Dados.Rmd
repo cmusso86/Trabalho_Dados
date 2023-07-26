@@ -276,7 +276,7 @@ names(amostra_trat) <- c("ID", "Idade", "Status Socioeconomico", "Casa Propria",
 Tab1 <- papeR::summarize(amostra_trat[,-1],
                  type = "factor", group = "Poupanca", test="chisq.test")
 
-names(Tab1 ) <- c("Variável", "Nível", "a", "N (não tem)", "% (não tem)", "b", "N (tem)", " % (tem)", "c", "p-valor")
+names(Tab1 ) <- c("Variável", "Nível", "a", "N ", "%", "b", "N", " % ", "c", "p-valor")
 
 Tab1 <- Tab1 %>% as_tibble() %>% select(-c("a", "b", "c")) %>% 
   mutate(`p-valor`= str_replace(`p-valor`, "<0.001", "0.0001"))
@@ -290,7 +290,10 @@ knitr::kable(Tab1,format="latex", booktabs = T,
         align="c", caption= "Frequências relativas e absolutas das variáveis qualitativas por grupo Com ou Sem poupança. P-valor proveniente do teste de $\\chi^2$ de associação para cada variável.") %>% 
   kable_styling(latex_options = "HOLD_position", position="center", 
                 full_width = F) %>% 
-  row_spec(c(3,5),hline_after = TRUE)
+  row_spec(c(3,5),hline_after = TRUE) %>% 
+   add_header_above(c(" ", " ", "Sem Poupança" = 2, 
+                     "Com poupança" = 2, "" ))
+  
 ```
 
 
@@ -324,7 +327,7 @@ knitr::kable(Tab2,format="latex", booktabs = T,
 
 ### Seleção de Variáveis
 
-A Figura 5 apresenta os modelos logísticos possíveis. Os três modelos destacados são os que possuem os menores valores para o AIC e incluem as variáveis idade e status como explicativas. Um dos modelos também inclui a posse de casa própria enquanto o outro inclui o setor da cidade.
+A Figura \ref{fig:AIC} apresenta os modelos logísticos possíveis. Os três modelos destacados são os que possuem os menores valores para o AIC e incluem as variáveis idade e status como explicativas. Um dos modelos também inclui a posse de casa própria enquanto o outro inclui o setor da cidade.
 
 Esses três modelos serão ajustados e avaliados.
 
@@ -401,19 +404,17 @@ mod3 <- glm(save ~ idade + factor(status) +
 
 ### Modelo 1
 
-Esse modelo inclui apenas o status e a idade como explicativas.
+Este modelo utiliza apenas o status econômico e a idade como variáveis explicativas. Conforme demonstrado na Tabela \ref{tab:mod1}, a idade apresenta uma relação positiva com a posse de poupança: à medida que a idade aumenta, a probabilidade de possuir poupança também aumenta. Por outro lado, os coeficientes das variáveis dummy para status econômico indicam que há uma relação negativa entre essa variável e a resposta: à medida que se avança nos níveis socioeconômicos, a probabilidade de possuir poupança diminui. Vale ressaltar que os níveis mais altos de status socioeconômico são indexados por a valores/níveis menores.
 
-De acordo com a Tabela 3, a idade apresenta uma associação positiva com a posse de poupança: quanto maior a idade, maior a probabilidade de se ter poupança. Já os coeficientes das variáveis *dummy* para status econômico indicam que a relação dessa variável com a resposta é negativa: avançando nos níveis, reduz-se a probabilidade de possuir poupança. Vale lembrar que os status socioeconômicos mais altos estão com valores/ níveis menores.
+De acordo com a razão de chances, observa-se que a cada ano que uma pessoa envelhece, sua chance de possuir poupança aumenta em 3%. Além disso, caso um paciente com status socioeconômico superior passe a ter status médio, sua probabilidade de possuir poupança reduz em 72%. Já se esse paciente passar a ter status inferior, sua chance de possuir poupança sofrerá uma redução de 87%.
 
-Pela razão de chances, observa-se que ao envelhecer 1 ano, o paciente tem 3% a mais de chance de possuir poupança. Além disso, se um paciente com status socioeconômico superior passasse a ter status médio, sua chance de ter poupança se reduziria em 72%. Ou se esse paciente passasse a ter status inferior, sua chance de ter poupança sofreria uma redução de 87%.
-
-```{r}
+```{r mod1}
 #modelo selecionado
 broom::tidy(mod1$coefficients) %>% 
   mutate(OR=round(exp(x), 2)) %>% 
   kable(format="latex", booktabs = T, 
         linesep="", 
-        align=c("c"),
+        align=c("c"), 
         col.names=c("Variável", "Coeficiente", "OR"), caption="Estimativas dos parâmetros e das razões de chances para o modelo 1.") %>% 
   kable_styling(latex_options = "HOLD_position", position="center", 
                 full_width = F)
@@ -421,13 +422,11 @@ broom::tidy(mod1$coefficients) %>%
 
 ### Modelo 2
 
-Esse modelo mantém as mesmas variáveis de antes, mas incluindo também o setor de habitação (A ou B) na cidade.
+Este modelo mantém as mesmas variáveis do anterior, mas agora inclui também o setor de habitação (A ou B) na cidade. As estimativas dos parâmetros estão apresentadas na Tabela \ref{tab:mod2} e são próximas àquelas já apresentadas no modelo anterior para idade e status.
 
-As estimativas dos parâmetos para idade e status são próximas àquelas já apresentadas no modelo anterior.
+Quanto ao setor de habitação, observa-se uma associação negativa com a resposta, indicando que os pacientes do setor B têm menor probabilidade de possuir poupança. De fato, a chance de ter poupança para os habitantes do setor B representa apenas 63% da chance para os moradores do setor A.
 
-Quanto ao setor, a sua associação com a resposta é negativa, já que os pacientes do setor B apresentam menor probabilidade de possuir poupança. De fato, a chance de ter poupança para os habitantes do setor B representa 63% dessa chance para os moradores do setor A.
-
-```{r}
+```{r mod2}
 #modelo saturado
 broom::tidy(mod2$coefficients) %>% 
   mutate(OR=round(exp(x), 2)) %>% 
@@ -441,11 +440,11 @@ broom::tidy(mod2$coefficients) %>%
 
 ### Modelo 3
 
-Por fim, ajusta-se o modelo que inclui idade e status socioeconômico, mas também a variável indicadora de posse de casa própria quitada.
+Por fim, foi realizado o ajuste do modelo que incorpora a idade, o status socioeconômico e uma variável indicadora referente à posse de casa própria quitada.
 
-Novamente os valores para os atributos já modelados estão próximos ao que foi apresentado anteriormente. Enquanto isso, a variável casa apresentou razão de chances igual a 1, indicando independência entre a posse de casa e a posse de poupança.
+Os valores estimados para os atributos previamente modelados mantêm-se próximos aos apresentados anteriormente (conforme Tabela \ref{tab:mod3}). Entretanto, a variável "casa" apresentou uma razão de chances igual a 1, indicando independência entre a posse de casa própria e a constituição de uma poupança.
 
-```{r}
+```{r mod3}
 #modelo saturado
 broom::tidy(mod3$coefficients) %>% 
   mutate(OR=round(exp(x), 2)) %>% 
@@ -495,22 +494,21 @@ text(20, 30, paste("AUC(mod3)=", auc3), col="green")
 
 ```
 
-Tem a curva roc aqui.
+Na Figura \ref{fig:ROC1} podemos observar a curva ROC e as respoctiva áreas sob a curva desses três modelos. Observa-se que por essa métrica os três modelos performaram de forma muito semelhante.
 
-```{r}
-# \begin{figure}[H]
-#     \centering
-#     \includegraphics[scale=0.4]{img/roc.png}
-#     \caption{Diagrama de caixas para distribuição de idade entre os grupos sem (azul) e com (verde) poupança. Para comparação, a distribuiçao de idade geral foi adicionada no canto superior esquerdo.}
-#     \label{fig:ROC1}
-# \end{figure}
-```
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.4]{img/roc.png}
+    \caption{Diagrama de caixas para distribuição de idade entre os grupos sem (azul) e com (verde) poupança. Para comparação, a distribuiçao de idade geral foi adicionada no canto superior esquerdo.}
+    \label{fig:ROC1}
+\end{figure}
+
 
 ### Refinamento do modelo
 
 Testando modelos com interação, verificou-se que apenas a interação entre a idade do paciente e a posse de casa própria quitada surtiam efeito significante na modelagem da probabilidade de possuir poupança.
 
-Como pode ser observado na Figura 6, a associação entre idade e posse de poupança é positiva para os moradores do setor A (casa=1) e negativa para os moradores do setor B (casa=2). Ou seja, no setor B os jovens é que tendem a ter poupança.
+Como pode ser observado na \ref{fig:interacao}, a associação entre idade e posse de poupança é positiva para os moradores do setor A (casa=1) e negativa para os moradores do setor B (casa=2). Ou seja, no setor B os jovens é que tendem a ter poupança.
 
 ```{r results='hide'}
 
@@ -520,7 +518,7 @@ mod3_iter <- glm(save ~ idade+factor(status)+
 summary(mod3_iter)
 
 p <- plot_model(mod3_iter, type="pred", terms=c("idade", "casa"), se=FALSE)+
-  theme_classic(base_size = 14)+
+  theme_classic(base_size = 16)+
   labs(x="Idade (anos)", y="Tem poupança")+
   ggtitle("")
 
@@ -559,16 +557,16 @@ text(20, 35, paste("AUC(interação)=", auc3_inter), col="red")
 
 ```
 
-Tem a curva roc aqui.
+Ao comparar esse modelo com equilalente (sem interação), vemos que houve uma melhora significativa do AUC com a inclusão desse parâmetro (Figura \ref{fig:ROC2}. Este modelo 
 
-```{r}
-# \begin{figure}[H]
-#     \centering
-#     \includegraphics[scale=0.4]{img/roc_inter.png}
-#     \caption{Diagrama de caixas para distribuição de idade entre os grupos sem (azul) e com (verde) poupança. Para comparação, a distribuiçao de idade geral foi adicionada no canto superior esquerdo.}
-#     \label{fig:ROC2}
-# \end{figure}
-```
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.4]{img/roc_inter.png}
+    \caption{Diagrama de caixas para distribuição de idade entre os grupos sem (azul) e com (verde) poupança. Para comparação, a distribuiçao de idade geral foi adicionada no canto superior esquerdo.}
+    \label{fig:ROC2}
+\end{figure}
+`
 
 
 ### Análise de Resíduos
@@ -578,7 +576,7 @@ Finalmente, observa-se o comportamento dos resíduos para o modelo selecionado.
 A Figura 7 apresenta os resíduos pelos valores ajustados e está de acordo com o que seria esperado para um modelo de Regressão Logística: para valores ajustados maiores, os resíduos positivos tendem a diminuir em magnitude, enquanto os negativos tendem a aumentar em magnitude.
 
 ```{r results='hide'}
-performance_hosmer(mod1)
+mod1_hosmer <- performance_hosmer(mod1)
 performance_hosmer(mod2)
 performance_hosmer(mod3)
 performance_hosmer(mod3_iter)
